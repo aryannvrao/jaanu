@@ -706,32 +706,39 @@
       function tryLoadImage(url) {
         return new Promise((resolve) => {
           const img = new Image();
-          img.onload = () => resolve({ img, url });
-          img.onerror = () => resolve(null);
+          let settled = false;
+          const finish = (result) => {
+            if (settled) return;
+            settled = true;
+            resolve(result);
+          };
+          const timer = setTimeout(() => finish(null), 3500);
+          img.onload = () => {
+            clearTimeout(timer);
+            if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+              finish({ img, url });
+            } else {
+              finish(null);
+            }
+          };
+          img.onerror = () => { clearTimeout(timer); finish(null); };
           img.src = safeFileUrl(url);
         });
       }
 
-      async function setupAudio() {
-        for (const candidate of CANDIDATES.audio) {
-          const url = safeFileUrl(candidate);
-          try {
-            const resp = await fetch(url, { method: 'HEAD', cache: 'no-store' });
-            if (resp.ok) {
-              bgAudio.src = url;
-              audioLoaded = true;
-              return;
-            }
-          } catch (e) {
-            if (window.location.protocol === 'file:') {
-              bgAudio.src = url;
-              audioLoaded = true;
-              return;
-            }
-          }
-        }
-        bgAudio.src = safeFileUrl(CANDIDATES.audio[0]);
+      function setupAudio() {
+        const primary = CANDIDATES.audio[0];
+        const secondary = CANDIDATES.audio[1];
+        bgAudio.src = safeFileUrl(primary);
         audioLoaded = true;
+
+        bgAudio.addEventListener('error', function onAudioError() {
+          if (secondary && bgAudio.src !== safeFileUrl(secondary)) {
+            bgAudio.src = safeFileUrl(secondary);
+          } else {
+            audioLoaded = false;
+          }
+        }, { once: true });
       }
 
       async function loadFirstAvailable(candidateList) {
@@ -1313,39 +1320,41 @@
         const statusEl = document.getElementById('asset-status-text');
         const manualWrap = document.getElementById('manual-folder-Wrap');
 
-        // 1. Resolve Audio in background
-        const audioPromise = setupAudio();
+        // 1. Instant audio assignment
+        setupAudio();
 
-        // 2. Resolve all 5 photo memories in parallel
-        const [aryanRes, harshuRes, us1Res, us2Res, us3Res] = await Promise.all([
-          loadFirstAvailable(CANDIDATES.aryan),
-          loadFirstAvailable(CANDIDATES.harshu),
-          loadFirstAvailable(CANDIDATES.us1),
-          loadFirstAvailable(CANDIDATES.us2),
-          loadFirstAvailable(CANDIDATES.us3)
-        ]);
+        // 2. Resolve all 5 photo memories in parallel with safety timeouts
+        try {
+          const [aryanRes, harshuRes, us1Res, us2Res, us3Res] = await Promise.all([
+            loadFirstAvailable(CANDIDATES.aryan),
+            loadFirstAvailable(CANDIDATES.harshu),
+            loadFirstAvailable(CANDIDATES.us1),
+            loadFirstAvailable(CANDIDATES.us2),
+            loadFirstAvailable(CANDIDATES.us3)
+          ]);
 
-        await audioPromise;
-
-        if (aryanRes) {
-          PHOTO_SLOTS[0].asset = buildAsciiAsset(aryanRes.img, 'aryan');
-          PHOTO_SLOTS[0].loaded = true;
-        }
-        if (harshuRes) {
-          PHOTO_SLOTS[1].asset = buildAsciiAsset(harshuRes.img, 'harshu');
-          PHOTO_SLOTS[1].loaded = true;
-        }
-        if (us1Res) {
-          PHOTO_SLOTS[2].asset = buildAsciiAsset(us1Res.img, 'us1');
-          PHOTO_SLOTS[2].loaded = true;
-        }
-        if (us2Res) {
-          PHOTO_SLOTS[3].asset = buildAsciiAsset(us2Res.img, 'us2');
-          PHOTO_SLOTS[3].loaded = true;
-        }
-        if (us3Res) {
-          PHOTO_SLOTS[4].asset = buildAsciiAsset(us3Res.img, 'us3');
-          PHOTO_SLOTS[4].loaded = true;
+          if (aryanRes) {
+            PHOTO_SLOTS[0].asset = buildAsciiAsset(aryanRes.img, 'aryan');
+            PHOTO_SLOTS[0].loaded = true;
+          }
+          if (harshuRes) {
+            PHOTO_SLOTS[1].asset = buildAsciiAsset(harshuRes.img, 'harshu');
+            PHOTO_SLOTS[1].loaded = true;
+          }
+          if (us1Res) {
+            PHOTO_SLOTS[2].asset = buildAsciiAsset(us1Res.img, 'us1');
+            PHOTO_SLOTS[2].loaded = true;
+          }
+          if (us2Res) {
+            PHOTO_SLOTS[3].asset = buildAsciiAsset(us2Res.img, 'us2');
+            PHOTO_SLOTS[3].loaded = true;
+          }
+          if (us3Res) {
+            PHOTO_SLOTS[4].asset = buildAsciiAsset(us3Res.img, 'us3');
+            PHOTO_SLOTS[4].loaded = true;
+          }
+        } catch (err) {
+          console.warn('Image load notice:', err);
         }
 
         // Fill any empty slot with procedural warm portrait
@@ -1364,11 +1373,6 @@
         } else if (loadedCount > 0 || audioLoaded) {
           statusEl.textContent = `✦ Loaded ${Math.min(5, loadedCount)}/5 photos ${audioLoaded ? '& song' : ''}`;
           if (loadedCount < 5 || !audioLoaded) manualWrap.style.display = 'inline-flex';
-        } else {
-          statusEl.textContent = "✦ Ready (or select workspace files below)";
-          manualWrap.style.display = 'inline-flex';
-        }
-      }
         } else {
           statusEl.textContent = "✦ Ready (or select workspace files below)";
           manualWrap.style.display = 'inline-flex';
