@@ -1,0 +1,2511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>A Quiet Place For You — Indigo &amp; Golden Sanctuary</title>
+
+  <!-- Google Fonts: Playfair Display + JetBrains Mono + Press Start 2P (for 2D Pixel Game UI accents) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-indigo-deep: #050816;
+      --bg-indigo-mid: #0C1438;
+      --indigo-glow: #4B69E6;
+      --indigo-soft: #8CA6FF;
+      --warm-ivory: #F7F1E5;
+      --warm-ivory-dim: rgba(247, 241, 229, 0.78);
+      --gold-amber: #E5B176;
+      --gold-bright: #FBE0B4;
+      --glass-indigo: rgba(10, 15, 38, 0.78);
+      --glass-border: rgba(140, 166, 255, 0.32);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg-indigo-deep);
+      font-family: 'Playfair Display', Georgia, serif;
+      color: var(--warm-ivory);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Deep Indigo & Golden-Hour Dual Nebula Glow */
+    .ambient-glow {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      background:
+        radial-gradient(circle at 50% 44%, rgba(75, 105, 230, 0.14) 0%, rgba(212, 163, 115, 0.08) 38%, rgba(5, 8, 22, 0.72) 100%);
+    }
+
+    .vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 3;
+      box-shadow: inset 0 0 150px rgba(3, 5, 15, 0.92);
+    }
+
+    /* Main High-DPI Canvas */
+    #sanctuary-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      display: block;
+      cursor: default;
+    }
+
+    #sanctuary-canvas.interactive-mode {
+      cursor: grab;
+    }
+
+    #sanctuary-canvas.interactive-mode:active {
+      cursor: grabbing;
+    }
+
+    /* ==========================================
+       OPENING SANCTUARY SCREEN (AUDIO UNLOCK)
+       ========================================== */
+    #sanctuary-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(22, 34, 88, 0.88) 0%, rgba(6, 9, 24, 0.97) 75%);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      transition: opacity 1.8s cubic-bezier(0.37, 0, 0.63, 1), visibility 1.8s;
+    }
+
+    #sanctuary-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .sanctuary-card {
+      max-width: 560px;
+      width: 100%;
+      padding: 3.1rem 2.5rem;
+      border-radius: 28px;
+      background: rgba(11, 17, 44, 0.72);
+      border: 1px solid rgba(140, 166, 255, 0.28);
+      box-shadow:
+        0 25px 75px rgba(0, 0, 0, 0.82),
+        0 0 65px rgba(75, 105, 230, 0.18),
+        inset 0 1px 0 rgba(247, 241, 229, 0.14);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.4rem;
+    }
+
+    /* Breathing Indigo + Golden Circle Animation */
+    .breathing-orb-wrap {
+      position: relative;
+      width: 104px;
+      height: 104px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 0.3rem;
+    }
+
+    .breathing-orb-outer {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1.5px solid rgba(140, 166, 255, 0.55);
+      box-shadow:
+        0 0 38px rgba(95, 130, 255, 0.35),
+        inset 0 0 24px rgba(243, 198, 143, 0.22);
+      animation: breatheCircle 6s ease-in-out infinite;
+    }
+
+    .breathing-orb-inner {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(251, 224, 180, 0.92) 0%, rgba(124, 154, 255, 0.55) 60%, transparent 100%);
+      box-shadow: 0 0 32px rgba(243, 198, 143, 0.65);
+      animation: breatheCore 6s ease-in-out infinite;
+    }
+
+    @keyframes breatheCircle {
+      0%, 100% { transform: scale(0.82); opacity: 0.48; }
+      50% { transform: scale(1.24); opacity: 0.96; }
+    }
+
+    @keyframes breatheCore {
+      0%, 100% { transform: scale(0.86); opacity: 0.68; }
+      50% { transform: scale(1.14); opacity: 1; }
+    }
+
+    .pixel-badge {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.08em;
+      color: var(--indigo-soft);
+      background: rgba(75, 105, 230, 0.16);
+      border: 1px solid rgba(140, 166, 255, 0.32);
+      padding: 0.42rem 0.85rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+
+    .sanctuary-title {
+      font-size: clamp(1.85rem, 4vw, 2.5rem);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: var(--warm-ivory);
+      text-shadow: 0 2px 26px rgba(110, 142, 255, 0.42);
+    }
+
+    .sanctuary-subtitle {
+      font-size: clamp(1rem, 2vw, 1.14rem);
+      font-style: italic;
+      line-height: 1.65;
+      color: var(--warm-ivory-dim);
+      max-width: 420px;
+    }
+
+    .enter-btn {
+      margin-top: 0.4rem;
+      padding: 0.98rem 2.7rem;
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.08rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: #090D24;
+      background: linear-gradient(135deg, #FBE0B4 0%, #E5B176 50%, #9BB2FF 100%);
+      border: 1px solid rgba(255, 240, 215, 0.75);
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow:
+        0 12px 34px rgba(95, 130, 255, 0.36),
+        0 0 20px rgba(229, 177, 118, 0.28);
+      transition: all 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .enter-btn:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow:
+        0 16px 42px rgba(140, 166, 255, 0.52),
+        0 0 28px rgba(251, 224, 180, 0.48);
+    }
+
+    .asset-status {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      color: rgba(168, 188, 255, 0.78);
+      letter-spacing: 0.04em;
+      margin-top: 0.2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .manual-load-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.95rem;
+      border-radius: 999px;
+      background: rgba(75, 105, 230, 0.18);
+      border: 1px solid rgba(140, 166, 255, 0.38);
+      color: var(--gold-bright);
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      transition: background 0.3s ease;
+    }
+
+    .manual-load-label:hover {
+      background: rgba(75, 105, 230, 0.32);
+    }
+
+    /* ==========================================
+       COZY GLASSMORPHIC SUBTITLE BAR
+       ========================================== */
+    #subtitle-container {
+      position: fixed;
+      bottom: 5.5vh;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      width: min(880px, 92vw);
+      pointer-events: none;
+      display: flex;
+      justify-content: center;
+      transition: bottom 0.8s cubic-bezier(0.37, 0, 0.63, 1);
+    }
+
+    #subtitle-container.dock-active {
+      bottom: 13.8vh;
+    }
+
+    .subtitle-pill {
+      padding: 1.15rem 2.2rem;
+      border-radius: 22px;
+      background: rgba(8, 13, 34, 0.82);
+      border: 1px solid rgba(140, 166, 255, 0.28);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow:
+        0 16px 46px rgba(0, 0, 0, 0.76),
+        0 0 38px rgba(75, 105, 230, 0.15),
+        inset 0 1px 0 rgba(251, 224, 180, 0.12);
+      text-align: center;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 1.05s cubic-bezier(0.37, 0, 0.63, 1), transform 1.05s cubic-bezier(0.37, 0, 0.63, 1);
+    }
+
+    .subtitle-pill.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #subtitle-text {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: clamp(1.04rem, 2.05vw, 1.35rem);
+      line-height: 1.55;
+      color: var(--warm-ivory);
+      letter-spacing: 0.015em;
+      text-shadow: 0 2px 16px rgba(0, 0, 0, 0.9);
+    }
+
+    /* ==========================================
+       SCENE 6: INTERACTIVE SANCTUARY BOTTOM DOCK
+       ========================================== */
+    #interactive-dock {
+      position: fixed;
+      bottom: 2.2vh;
+      left: 50%;
+      transform: translateX(-50%) translateY(28px);
+      z-index: 30;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0.62rem 1rem;
+      border-radius: 999px;
+      background: rgba(9, 14, 38, 0.86);
+      border: 1px solid rgba(140, 166, 255, 0.35);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow:
+        0 18px 55px rgba(0, 0, 0, 0.85),
+        0 0 42px rgba(75, 105, 230, 0.22);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 1.2s cubic-bezier(0.37, 0, 0.63, 1), transform 1.2s cubic-bezier(0.37, 0, 0.63, 1), visibility 1.2s;
+      max-width: 96vw;
+    }
+
+    #interactive-dock.visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .dock-btn {
+      padding: 0.5rem 0.98rem;
+      border-radius: 999px;
+      border: 1px solid rgba(140, 166, 255, 0.24);
+      background: rgba(18, 27, 68, 0.72);
+      color: var(--warm-ivory-dim);
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 0.88rem;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.32s ease;
+      white-space: nowrap;
+    }
+
+    .dock-btn:hover {
+      color: var(--warm-ivory);
+      border-color: rgba(251, 224, 180, 0.65);
+      background: rgba(75, 105, 230, 0.32);
+      transform: translateY(-1px);
+    }
+
+    .dock-btn.active {
+      color: #080C22;
+      background: linear-gradient(135deg, #FBE0B4 0%, #E5B176 55%, #A3B8FF 100%);
+      border-color: rgba(255, 240, 215, 0.85);
+      font-weight: 600;
+      box-shadow: 0 0 20px rgba(140, 166, 255, 0.45);
+    }
+
+    .dock-divider {
+      width: 1px;
+      height: 22px;
+      background: rgba(140, 166, 255, 0.25);
+      margin: 0 0.15rem;
+    }
+
+    .dock-btn.morph-btn {
+      background: linear-gradient(135deg, rgba(75, 105, 230, 0.38) 0%, rgba(168, 118, 62, 0.38) 100%);
+      border: 1px solid rgba(165, 188, 255, 0.6);
+      color: #FBE5C5;
+    }
+
+    .dock-btn.warmth-btn {
+      background: linear-gradient(135deg, rgba(243, 198, 143, 0.28) 0%, rgba(92, 124, 250, 0.38) 100%);
+      border: 1px solid rgba(251, 224, 180, 0.72);
+      color: #FFF0DA;
+      font-weight: 500;
+      animation: warmthPulse 3.2s ease-in-out infinite;
+    }
+
+    @keyframes warmthPulse {
+      0%, 100% { box-shadow: 0 0 16px rgba(140, 166, 255, 0.28); }
+      50% { box-shadow: 0 0 30px rgba(251, 224, 180, 0.55); }
+    }
+
+    /* ==========================================
+       FLOATING "FEEL WARMTH" RPG PIXEL + GLASS TOAST
+       ========================================== */
+    #warmth-toast {
+      position: fixed;
+      top: 10.5vh;
+      left: 50%;
+      transform: translateX(-50%) translateY(-14px);
+      z-index: 35;
+      width: min(690px, 92vw);
+      padding: 1.3rem 2rem;
+      border-radius: 22px;
+      background: rgba(10, 16, 44, 0.9);
+      border: 2px solid rgba(251, 224, 180, 0.55);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.85),
+        0 0 45px rgba(95, 130, 255, 0.32);
+      text-align: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.9s cubic-bezier(0.37, 0, 0.63, 1), transform 0.9s cubic-bezier(0.37, 0, 0.63, 1);
+    }
+
+    #warmth-toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast-pixel-tag {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.55rem;
+      color: var(--gold-bright);
+      letter-spacing: 0.08em;
+      margin-bottom: 0.55rem;
+      display: block;
+    }
+
+    #warmth-toast p {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: clamp(1rem, 2vw, 1.24rem);
+      line-height: 1.55;
+      color: #FFF3E4;
+      text-shadow: 0 2px 16px rgba(95, 130, 255, 0.45);
+    }
+
+    /* ==========================================
+       TOP-RIGHT SUBTLE HUD & MODE CONTROLS
+       ========================================== */
+    .top-hud {
+      position: fixed;
+      top: 1.25rem;
+      right: 1.4rem;
+      z-index: 25;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.55rem;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .top-hud.visible {
+      opacity: 1;
+    }
+
+    .hud-pill {
+      padding: 0.4rem 0.88rem;
+      border-radius: 999px;
+      background: rgba(10, 16, 42, 0.76);
+      border: 1px solid rgba(140, 166, 255, 0.3);
+      backdrop-filter: blur(10px);
+      color: rgba(247, 241, 229, 0.84);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .hud-pill:hover {
+      color: var(--gold-bright);
+      border-color: rgba(251, 224, 180, 0.65);
+      background: rgba(30, 46, 110, 0.75);
+    }
+
+    /* Top-Left Scene Status Pill */
+    .scene-badge {
+      position: fixed;
+      top: 1.25rem;
+      left: 1.4rem;
+      z-index: 25;
+      padding: 0.42rem 0.9rem;
+      border-radius: 999px;
+      background: rgba(10, 16, 42, 0.72);
+      border: 1px solid rgba(140, 166, 255, 0.26);
+      backdrop-filter: blur(10px);
+      color: var(--indigo-soft);
+      font-family: 'Press Start 2P', monospace;
+      font-size: 0.54rem;
+      letter-spacing: 0.06em;
+      opacity: 0;
+      transition: opacity 1s ease;
+      pointer-events: none;
+    }
+
+    .scene-badge.visible {
+      opacity: 1;
+    }
+
+    /* Bottom Timeline Progress Thread */
+    #timeline-thread {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      height: 2.5px;
+      width: 0%;
+      z-index: 40;
+      background: linear-gradient(90deg, #4B69E6 0%, #8CA6FF 50%, #FBE0B4 100%);
+      box-shadow: 0 0 14px rgba(140, 166, 255, 0.75);
+      transition: width 0.15s linear;
+    }
+
+    @media (max-width: 720px) {
+      .sanctuary-card { padding: 2.2rem 1.4rem; }
+      #interactive-dock { border-radius: 20px; padding: 0.55rem 0.7rem; bottom: 1.2vh; }
+      .dock-btn { padding: 0.4rem 0.72rem; font-size: 0.78rem; }
+      #subtitle-container.dock-active { bottom: 19vh; }
+      .scene-badge { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- High-DPI Hardware-Accelerated Canvas -->
+  <canvas id="sanctuary-canvas"></canvas>
+  <div class="ambient-glow"></div>
+  <div class="vignette"></div>
+
+  <!-- Opening Sanctuary Overlay (Browser Audio Unlock) -->
+  <div id="sanctuary-overlay">
+    <div class="sanctuary-card">
+      <div class="breathing-orb-wrap">
+        <div class="breathing-orb-outer"></div>
+        <div class="breathing-orb-inner"></div>
+      </div>
+      <span class="pixel-badge">✦ Midnight Indigo &amp; Golden Sanctuary ✦</span>
+      <h1 class="sanctuary-title">A Quiet Place For You</h1>
+      <p class="sanctuary-subtitle">Put on your earphones, get comfortable, and take a breath</p>
+      <button id="enter-btn" class="enter-btn">Click to Enter</button>
+
+      <div class="asset-status">
+        <span id="asset-status-text">Locating workspace memories &amp; music...</span>
+        <label id="manual-folder-Wrap" class="manual-load-label" style="display: none;">
+          <span>Select Workspace Files</span>
+          <input type="file" id="manual-file-input" multiple accept="image/*,audio/*" style="display: none;" />
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top-Left Pixel RPG Scene Indicator -->
+  <div id="scene-badge" class="scene-badge">SCENE 00 // QUIET BREATH</div>
+
+  <!-- Top-Right Subtle Controls -->
+  <div id="top-hud" class="top-hud">
+    <span id="zoom-readout" class="hud-pill" title="Click to reset zoom">Zoom: 1.0x</span>
+    <button id="eye-zoom-btn" class="hud-pill" style="display: none;" title="Toggle ASCII Eye -> Heart Morph">Eye ➔ Heart Morph 🫀</button>
+    <button id="mute-btn" class="hud-pill" title="Toggle Audio">♫ Sound On</button>
+  </div>
+
+  <!-- Floating Warmth Message Toast -->
+  <div id="warmth-toast">
+    <span class="toast-pixel-tag">♥ +999 WARMTH &amp; PEACE RECEIVED ♥</span>
+    <p>Rest your body, drink some warm water, and keep smiling madam ji. Your Aaru always has your back 🤍🫀</p>
+  </div>
+
+  <!-- Cozy Glassmorphic Subtitle Bar -->
+  <div id="subtitle-container">
+    <div id="subtitle-pill" class="subtitle-pill">
+      <p id="subtitle-text"></p>
+    </div>
+  </div>
+
+  <!-- Scene 6: Interactive Sanctuary Dock -->
+  <div id="interactive-dock">
+    <button class="dock-btn active" data-photo="0">Aryan Eyes 🖤</button>
+    <button class="dock-btn" data-photo="1">Harshu Eyes 🤎</button>
+    <button class="dock-btn" data-photo="2">Us 1</button>
+    <button class="dock-btn" data-photo="3">Us 2</button>
+    <button class="dock-btn" data-photo="4">Us 3</button>
+    <div class="dock-divider"></div>
+    <button id="morph-dock-btn" class="dock-btn morph-btn">Eye ➔ Heart 🫀</button>
+    <button id="replay-btn" class="dock-btn">↻ Replay</button>
+    <button id="feel-warmth-btn" class="dock-btn warmth-btn">Feel Warmth 🤍</button>
+  </div>
+
+  <!-- Subtle Timeline Progress Thread -->
+  <div id="timeline-thread"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      /* ==========================================================================
+         1. ROMANTIC ASCII PALETTES, EASING & SUBTITLE TIMELINE
+         ========================================================================== */
+      const ROMANTIC_PALETTE = "LOVEHARSHUAARU";
+
+      const easeInOutSine = (t) => {
+        const c = Math.max(0, Math.min(1, t));
+        return -(Math.cos(Math.PI * c) - 1) / 2;
+      };
+
+      const easeOutBack = (t) => {
+        const c = Math.max(0, Math.min(1, t));
+        const c1 = 1.70158;
+        const c3 = c1 + 1;
+        return 1 + c3 * Math.pow(c - 1, 3) + c1 * Math.pow(c - 1, 2);
+      };
+
+      const lerp = (a, b, t) => a + (b - a) * t;
+      const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+      const SUBTITLES = [
+        { start: 1.0,  end: 5.0,  text: "Before anything else, baba... take one slow, deep breath. Unclench your jaw. Drop your shoulders." },
+        { start: 5.5,  end: 9.5,  text: "There is nothing to fight here, and nothing to figure out tonight. Just let your mind rest for a minute." },
+        { start: 11.0, end: 17.0, text: "Even when miles are between us, or when the days feel heavy and loud..." },
+        { start: 17.5, end: 23.5, text: "...if you look closely into my black eyes, they turn into a quiet heart beating only for you." },
+        { start: 25.0, end: 32.0, text: "You carry so much in that beautiful head of yours... always trying to be strong and handle everything on your own." },
+        { start: 32.5, end: 39.5, text: "But look closely inside your own golden-brown eyes, harshu... every single pixel of you turns into pure love." },
+        { start: 41.0, end: 48.0, text: "When my eyes meet yours, nobody loses their freedom and nobody gets tied down..." },
+        { start: 48.5, end: 55.5, text: "...it just feels like coming home after a long, exhausting day. Quiet, safe, and warm." },
+        { start: 57.0, end: 65.0, text: "Every smile we shared, every quiet ride, every little memory is safely kept right here." },
+        { start: 65.5, end: 73.0, text: "Take all the time and space you need to breathe and do your thing, meri bachi. There is zero pressure here." },
+        { start: 73.5, end: 80.0, text: "Whenever your mind gets tired, this warm indigo corner is always yours. Pal pal dil ke paas... tum rehti ho. 🤍🫀" }
+      ];
+
+      /* ==========================================================================
+         2. WORKSPACE ASSET DETECTION (5 PHOTOS + SONG AUDIO)
+         ========================================================================== */
+      const PHOTO_SLOTS = [
+        { id: 'aryan',  label: 'Aryan Eyes', loaded: false, asset: null },
+        { id: 'harshu', label: 'Harshu Eyes', loaded: false, asset: null },
+        { id: 'us1',    label: 'Us 1', loaded: false, asset: null },
+        { id: 'us2',    label: 'Us 2', loaded: false, asset: null },
+        { id: 'us3',    label: 'Us 3', loaded: false, asset: null }
+      ];
+
+      const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'JPG', 'JPEG', 'PNG'];
+      const AUDIO_EXTENSIONS = ['mp3', 'm4a', 'wav', 'ogg', 'MP3', 'M4A'];
+
+      const CANDIDATES = {
+        aryan: [
+          'aryan.jpeg',
+          'aryan eyes but he is on the right.jpeg',
+          'aryan eyes.jpeg',
+          'aryan.jpg',
+          'aryan eyes but he is on the right.jpg'
+        ],
+        harshu: [
+          'harshu.jpeg',
+          'harshu eyes.jpeg',
+          'harsita eyes.jpeg',
+          'harshu.jpg'
+        ],
+        us1: [
+          'us1.jpeg',
+          'us1.jpg',
+          'us 1.jpeg',
+          'us.jpeg'
+        ],
+        us2: [
+          'us2.jpeg',
+          'us2.jpg',
+          'us 2.jpeg'
+        ],
+        us3: [
+          'us3.jpeg',
+          'us3.jpg',
+          'us 3.jpeg'
+        ],
+        audio: [
+          'song.mp3',
+          'pal-pal-dil-ke-paas (mp3cut.net).mp3',
+          'pal-pal-dil-ke-paas.mp3',
+          'music.mp3',
+          'Pal Pal Dil Ke Paas.mp3'
+        ]
+      };
+
+      const bgAudio = new Audio();
+      bgAudio.loop = true;
+      bgAudio.preload = 'auto';
+      let audioLoaded = false;
+      let synthAudioCtx = null;
+
+      function safeFileUrl(filename) {
+        if (!filename) return '';
+        if (filename.startsWith('blob:') || filename.startsWith('data:') || filename.startsWith('http')) {
+          return filename;
+        }
+        const decoded = (() => {
+          try { return decodeURIComponent(filename); } catch (e) { return filename; }
+        })();
+        return decoded.split('/').map(part => encodeURIComponent(part)).join('/');
+      }
+
+      function tryLoadImage(url) {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve({ img, url });
+          img.onerror = () => resolve(null);
+          img.src = safeFileUrl(url);
+        });
+      }
+
+      async function setupAudio() {
+        for (const candidate of CANDIDATES.audio) {
+          const url = safeFileUrl(candidate);
+          try {
+            const resp = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+            if (resp.ok) {
+              bgAudio.src = url;
+              audioLoaded = true;
+              return;
+            }
+          } catch (e) {
+            if (window.location.protocol === 'file:') {
+              bgAudio.src = url;
+              audioLoaded = true;
+              return;
+            }
+          }
+        }
+        bgAudio.src = safeFileUrl(CANDIDATES.audio[0]);
+        audioLoaded = true;
+      }
+
+      async function loadFirstAvailable(candidateList) {
+        for (const name of candidateList) {
+          const res = await tryLoadImage(name);
+          if (res) return { img: res.img, name };
+        }
+        return null;
+      }
+
+      /* ==========================================================================
+         3. BESPOKE ANATOMICAL ASCII EYE -> ASCII HEART MORPH GENERATOR
+            - Harshu's Eye: Radiant Golden-Brown, Honey-Amber & Sunlit Chestnut
+            - Aryan's Eye: Deep Obsidian-Black, Charcoal Velvet & Starlight Indigo
+         ========================================================================== */
+      function generateAestheticEyeToHeartSystem(eyeType) {
+        // High-density ASCII art grid: 96 columns x 46 rows
+        const cols = 96;
+        const rows = 46;
+        const particles = [];
+
+        // 1. Collect all target coordinates inside an anatomical, volumetrically shaded Heart
+        const heartTargets = [];
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const nx = (c - cols * 0.5) / (cols * 0.29);
+            const ny = -((r - rows * 0.49) / (rows * 0.36)); // +Y is up
+
+            // Classic algebraic heart curve: (x^2 + y^2 - 1)^3 - x^2 * y^3 <= 0
+            const a = nx * nx + ny * ny - 1.0;
+            const val = a * a * a - (nx * nx) * (ny * ny * ny);
+
+            if (val <= 0.14) {
+              const distFromCenter = Math.hypot(nx, ny * 0.85);
+              const isOuterLace = val > -0.045;
+              const isInnerRim  = val > -0.14 && !isOuterLace;
+              // Upper-left 3D specular highlight lobe
+              const highlightDist = Math.hypot(nx + 0.42, ny - 0.42);
+
+              let hChar = 'L';
+              const word = "LOVEHARSHUAARU";
+              if (isOuterLace) {
+                hChar = ( (c + r) % 4 === 0 ) ? '♡' : ( (c + r) % 2 === 0 ? '*' : '·' );
+              } else if (isInnerRim) {
+                hChar = (c % 2 === 0) ? '#' : '@';
+              } else if (highlightDist < 0.34) {
+                hChar = "✦LOVE✦"[(c + r) % 6];
+              } else {
+                hChar = word[(r * 5 + c) % word.length];
+              }
+
+              // Color shading for the Heart based on eyeType
+              let hr, hg, hb;
+              if (eyeType === 'golden_brown') {
+                // Harshu's Golden-Brown, Honey-Amber & Rose-Gold Heart with Indigo Starlight Lace
+                if (isOuterLace) {
+                  hr = 165; hg = 190; hb = 255; // Starlight indigo lace border
+                } else if (highlightDist < 0.36) {
+                  hr = 255; hg = 244; hb = 214; // Sunlit honey-gold specular highlight
+                } else {
+                  const shade = clamp(1.18 - distFromCenter * 0.52, 0.45, 1.15);
+                  hr = clamp(Math.round(244 * shade), 95, 255);
+                  hg = clamp(Math.round(168 * shade), 58, 230);
+                  hb = clamp(Math.round(82 * shade),  28, 165);
+                }
+              } else {
+                // Aryan's Deep Obsidian-Black, Velvet Charcoal & Starlight-Indigo Heart
+                if (isOuterLace) {
+                  hr = 248; hg = 216; hb = 168; // Warm golden-ivory lace rim
+                } else if (highlightDist < 0.36) {
+                  hr = 225; hg = 236; hb = 255; // Gleaming silver-indigo catchlight
+                } else {
+                  const ringWave = 0.5 + 0.5 * Math.sin(distFromCenter * 9.0);
+                  const shade = clamp(1.1 - distFromCenter * 0.45, 0.35, 1.1);
+                  hr = clamp(Math.round((52 + ringWave * 58) * shade), 32, 185);
+                  hg = clamp(Math.round((74 + ringWave * 78) * shade), 45, 205);
+                  hb = clamp(Math.round((148 + ringWave * 95) * shade), 85, 255);
+                }
+              }
+
+              heartTargets.push({
+                nx: (c - cols * 0.5) / (cols * 0.5),
+                ny: (r - rows * 0.5) / (rows * 0.5),
+                char: hChar,
+                r: hr,
+                g: hg,
+                b: hb,
+                dist: distFromCenter
+              });
+            }
+          }
+        }
+
+        // 2. Construct the Ultra-Detailed Anatomical ASCII Eye (Eyelids, Eyelashes, Sclera, Radial Iris, Pupil, Catchlights)
+        const eyePoints = [];
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            // Normalized coordinates (-1.35 .. +1.35 in X, -1.0 .. +1.0 in Y)
+            const ex = (c - cols * 0.5) / (cols * 0.37);
+            const ey = (r - rows * 0.5) / (rows * 0.37);
+
+            // Almond eye opening curves (upper & lower eyelid arches)
+            const xClamped = clamp(ex, -1.18, 1.18);
+            const archWidth = Math.max(0, 1 - Math.pow(xClamped / 1.08, 2));
+            const upperLidY = -0.50 * Math.pow(archWidth, 0.78) - 0.04 * Math.sin(ex * 1.4);
+            const lowerLidY =  0.46 * Math.pow(archWidth, 0.85) + 0.03 * Math.cos(ex * 1.2);
+
+            // Double eyelid crease above upper lid
+            const creaseY = upperLidY - 0.19 - 0.06 * archWidth;
+            // Eyebrow arch high above
+            const browY = -0.82 - 0.14 * Math.cos(ex * 1.35) + 0.08 * ex;
+
+            const distUpperLid = Math.abs(ey - upperLidY);
+            const distLowerLid = Math.abs(ey - lowerLidY);
+            const distCrease   = Math.abs(ey - creaseY);
+            const distBrow     = Math.abs(ey - browY);
+
+            // Iris & Pupil geometry (centered slightly above geometric center so upper lid rests gracefully)
+            const irisDx = ex * 1.02;
+            const irisDy = (ey + 0.02) * 1.06;
+            const irisR  = Math.hypot(irisDx, irisDy);
+            const irisAngle = Math.atan2(irisDy, irisDx);
+
+            // Twin specular catchlights inside eye
+            const catch1Dist = Math.hypot(irisDx + 0.17, irisDy + 0.16);
+            const catch2Dist = Math.hypot(irisDx - 0.15, irisDy - 0.14);
+
+            const insideAlmond = (Math.abs(ex) <= 1.08) && (ey >= upperLidY) && (ey <= lowerLidY);
+
+            // Check sweeping upper & lower eyelashes
+            let isUpperLash = false;
+            let isLowerLash = false;
+            if (Math.abs(ex) <= 1.06 && ey < upperLidY && ey > upperLidY - 0.24) {
+              const lashPhase = Math.sin((ex + (ey - upperLidY) * (ex * 0.9)) * 28.0);
+              if (lashPhase > 0.52) isUpperLash = true;
+            }
+            if (Math.abs(ex) <= 0.98 && ey > lowerLidY && ey < lowerLidY + 0.15) {
+              const lashPhase = Math.sin((ex - (ey - lowerLidY) * (ex * 0.8)) * 24.0);
+              if (lashPhase > 0.62) isLowerLash = true;
+            }
+
+            let includeCell = false;
+            let char = ' ';
+            let cr = 0, cg = 0, cb = 0;
+
+            // A. Sweeping Eyebrow Arch
+            if (Math.abs(ex) <= 1.12 && distBrow < 0.085 * (1.15 - Math.abs(ex) * 0.45)) {
+              includeCell = true;
+              char = ex < 0 ? '/' : (ex > 0.3 ? '\\' : '=');
+              if (eyeType === 'golden_brown') {
+                cr = 128; cg = 82; cb = 52;
+              } else {
+                cr = 72; cg = 84; cb = 128;
+              }
+            }
+            // B. Eyelid Crease Fold
+            else if (Math.abs(ex) <= 0.96 && distCrease < 0.042) {
+              includeCell = true;
+              char = '~';
+              if (eyeType === 'golden_brown') {
+                cr = 168; cg = 112; cb = 74;
+              } else {
+                cr = 92; cg = 108; cb = 162;
+              }
+            }
+            // C. Upper & Lower Eyelid Rim Lines
+            else if (Math.abs(ex) <= 1.10 && (distUpperLid < 0.058 || distLowerLid < 0.048)) {
+              includeCell = true;
+              const isUpper = distUpperLid < 0.058;
+              char = isUpper ? (Math.abs(ex) > 0.7 ? '~' : '@') : (Math.abs(ex) > 0.7 ? '.' : '=');
+              if (eyeType === 'golden_brown') {
+                cr = isUpper ? 115 : 155;
+                cg = isUpper ? 68  : 98;
+                cb = isUpper ? 42  : 64;
+              } else {
+                cr = isUpper ? 54 : 88;
+                cg = isUpper ? 64 : 102;
+                cb = isUpper ? 105 : 154;
+              }
+            }
+            // D. Sweeping Curved Eyelashes
+            else if (isUpperLash || isLowerLash) {
+              includeCell = true;
+              if (ex < -0.25) char = '\\';
+              else if (ex > 0.25) char = '/';
+              else char = '|';
+              if (eyeType === 'golden_brown') {
+                cr = 96; cg = 56; cb = 34;
+              } else {
+                cr = 48; cg = 58; cb = 96;
+              }
+            }
+            // E. Inside the Almond Eye Opening (Iris, Pupil, Catchlights, Sclera)
+            else if (insideAlmond) {
+              includeCell = true;
+
+              // 1. Bright Starlight Specular Catchlights
+              if (catch1Dist < 0.115 || catch2Dist < 0.072) {
+                char = catch1Dist < 0.06 ? '✦' : '@';
+                cr = 255; cg = 250; cb = 242;
+              }
+              // 2. Deep Central Pupil (Spelling LOVE inside the pupil!)
+              else if (irisR < 0.195) {
+                const pupilWord = "LOVE";
+                char = pupilWord[(c + r) % pupilWord.length];
+                if (eyeType === 'golden_brown') {
+                  // Deep espresso-gold core inside Harshu's pupil
+                  cr = 105; cg = 64; cb = 36;
+                } else {
+                  // Deep velvet-obsidian core with subtle indigo sheen inside Aryan's pupil
+                  cr = 52; cg = 62; cb = 104;
+                }
+              }
+              // 3. Detailed Radial Iris & Limbal Ring
+              else if (irisR < 0.50) {
+                const normIris = (irisR - 0.195) / (0.50 - 0.195); // 0 at pupil border -> 1 at outer limbal ring
+                const radialRay = 0.5 + 0.5 * Math.sin(irisAngle * 22.0 + Math.sin(irisR * 18.0));
+                const collarette = Math.exp(-Math.pow((normIris - 0.36) / 0.18, 2)); // Bright inner iris ring
+
+                // Characters inside the iris spell LOVE & HARSHU mixed with radial ASCII fibers
+                const irisWords = (r % 2 === 0) ? "LOVE*" : "HARSHU+";
+                char = normIris > 0.86 ? '@' : irisWords[(c + r) % irisWords.length];
+
+                if (eyeType === 'golden_brown') {
+                  // HARSHU'S GOLDEN-BROWN IRIS: Sunlit Honey-Gold, Amber, Chestnut & Warm Bronze
+                  if (normIris > 0.85) {
+                    // Rich dark chestnut limbal ring
+                    cr = 118; cg = 68; cb = 34;
+                  } else {
+                    const brightness = 0.68 + 0.42 * radialRay + 0.35 * collarette * (1 - normIris);
+                    cr = clamp(Math.round(238 * brightness), 110, 255);
+                    cg = clamp(Math.round(162 * brightness), 68,  228);
+                    cb = clamp(Math.round(74  * brightness), 28,  148);
+                  }
+                } else {
+                  // ARYAN'S BLACK IRIS: Deep Obsidian-Black, Charcoal Velvet & Silver-Indigo Striations
+                  if (normIris > 0.84) {
+                    // Crisp silver-indigo & obsidian outer limbal ring so the black iris pops
+                    cr = 92; cg = 112; cb = 178;
+                  } else {
+                    const fiberGlow = 0.42 + 0.48 * radialRay + 0.38 * collarette;
+                    cr = clamp(Math.round(74  * fiberGlow), 34, 145);
+                    cg = clamp(Math.round(88  * fiberGlow), 42, 168);
+                    cb = clamp(Math.round(138 * fiberGlow), 68, 230);
+                  }
+                }
+              }
+              // 4. Shaded Sclera (White of the Eye with soft pearlescent-indigo corner shading)
+              else {
+                const cornerDist = Math.abs(ex) / 1.06;
+                const lidShadow = Math.min(Math.abs(ey - upperLidY), Math.abs(ey - lowerLidY)) / 0.35;
+                const scleraShade = clamp((1.0 - cornerDist * 0.48) * clamp(lidShadow + 0.45, 0.45, 1.0), 0.32, 0.95);
+
+                const scleraChars = ".:*o";
+                char = scleraChars[Math.min(3, Math.floor(scleraShade * 4))];
+                cr = Math.round(218 * scleraShade);
+                cg = Math.round(214 * scleraShade);
+                cb = Math.round(235 * scleraShade);
+              }
+            }
+
+            if (includeCell) {
+              eyePoints.push({
+                nx: (c - cols * 0.5) / (cols * 0.5),
+                ny: (r - rows * 0.5) / (rows * 0.5),
+                char,
+                r: cr,
+                g: cg,
+                b: cb,
+                angle: Math.atan2(ey, ex)
+              });
+            }
+          }
+        }
+
+        // Sort both arrays by polar angle + radius so the Eye-to-Heart morph flows organically like liquid starlight!
+        const sortByAngle = (a, b) => Math.atan2(a.ny, a.nx) - Math.atan2(b.ny, b.nx);
+        eyePoints.sort(sortByAngle);
+        heartTargets.sort(sortByAngle);
+
+        const count = Math.max(eyePoints.length, heartTargets.length);
+        for (let i = 0; i < count; i++) {
+          const ep = eyePoints[i % eyePoints.length];
+          const hp = heartTargets[i % heartTargets.length];
+          particles.push({
+            eyeX: ep.nx,
+            eyeY: ep.ny,
+            eyeChar: ep.char,
+            eyeR: ep.r,
+            eyeG: ep.g,
+            eyeB: ep.b,
+            heartX: hp.nx,
+            heartY: hp.ny,
+            heartChar: hp.char,
+            heartR: hp.r,
+            heartG: hp.g,
+            heartB: hp.b,
+            swirlSeed: (i % 17) * 0.37
+          });
+        }
+
+        return particles;
+      }
+
+      const ARYAN_BLACK_EYE_SYSTEM   = generateAestheticEyeToHeartSystem('obsidian_black');
+      const HARSHU_GOLDEN_EYE_SYSTEM = generateAestheticEyeToHeartSystem('golden_brown');
+
+      /**
+       * Renders the Anatomical ASCII Eye morphing into the Volumetric ASCII Heart
+       * @param {Array} particles - Precomputed eye-to-heart particle array
+       * @param {number} morphT - 0.0 = Pure ASCII Eye, 1.0 = Pure ASCII Heart
+       * @param {number} alpha - Overall opacity (0..1)
+       * @param {number} timeSec - Current animation clock for heartbeat & iris shimmer
+       * @param {string} eyeType - 'obsidian_black' | 'golden_brown'
+       */
+      function renderAsciiEyeToHeartMorph(particles, morphT, alpha, timeSec, eyeType) {
+        if (alpha <= 0.01) return;
+
+        const m = easeInOutSine(clamp(morphT, 0, 1));
+        const scaleRadius = Math.min(vw, vh) * 0.41;
+        const centerX = vw * 0.5;
+        const centerY = vh * 0.46;
+
+        // Gentle lub-dub heartbeat scale when morphed into the Heart
+        const beatCycle = (timeSec * 1.15) % 1.0;
+        const lub = Math.exp(-Math.pow((beatCycle - 0.14) / 0.055, 2)) * 0.055;
+        const dub = Math.exp(-Math.pow((beatCycle - 0.30) / 0.065, 2)) * 0.038;
+        const heartPulse = 1.0 + (lub + dub) * m;
+
+        ctx.save();
+
+        // Ambient radial backlight behind the ASCII Eye / Heart
+        const glowGrad = ctx.createRadialGradient(centerX, centerY, 8, centerX, centerY, scaleRadius * 1.25);
+        if (eyeType === 'golden_brown') {
+          glowGrad.addColorStop(0, `rgba(244, 172, 84, ${0.22 * alpha})`);
+          glowGrad.addColorStop(0.5, `rgba(75, 105, 230, ${0.12 * alpha})`);
+          glowGrad.addColorStop(1, 'rgba(5, 8, 22, 0)');
+        } else {
+          glowGrad.addColorStop(0, `rgba(92, 126, 245, ${0.24 * alpha})`);
+          glowGrad.addColorStop(0.5, `rgba(38, 52, 118, ${0.14 * alpha})`);
+          glowGrad.addColorStop(1, 'rgba(5, 8, 22, 0)');
+        }
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, scaleRadius * 1.25, 0, Math.PI * 2);
+        ctx.fill();
+
+        const fontSize = clamp(Math.round(scaleRadius / 24), 10, 18);
+        ctx.font = `700 ${fontSize}px "JetBrains Mono", monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.globalAlpha = alpha;
+
+        // Mid-morph swirl arc (peaks at m = 0.5)
+        const swirlAmount = Math.sin(m * Math.PI) * 0.16;
+
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+
+          // Interpolate position with a graceful spiral arc during transition
+          const baseNx = lerp(p.eyeX, p.heartX * heartPulse, m);
+          const baseNy = lerp(p.eyeY, p.heartY * heartPulse, m);
+
+          const angle = p.swirlSeed + timeSec * 1.4;
+          const nx = baseNx + Math.cos(angle) * swirlAmount * (0.4 + 0.6 * Math.sin(p.swirlSeed));
+          const ny = baseNy + Math.sin(angle) * swirlAmount * (0.4 + 0.6 * Math.cos(p.swirlSeed));
+
+          const sx = centerX + nx * scaleRadius;
+          const sy = centerY + ny * scaleRadius * 0.78;
+
+          // Interpolate RGB color with gentle shimmer
+          const shimmer = 0.92 + 0.08 * Math.sin(timeSec * 3.0 + p.swirlSeed * 4.0);
+          const r = Math.min(255, Math.round(lerp(p.eyeR, p.heartR, m) * shimmer));
+          const g = Math.min(255, Math.round(lerp(p.eyeG, p.heartG, m) * shimmer));
+          const b = Math.min(255, Math.round(lerp(p.eyeB, p.heartB, m) * shimmer));
+
+          ctx.fillStyle = `rgb(${r},${g},${b})`;
+          const ch = m < 0.5 ? p.eyeChar : p.heartChar;
+          ctx.fillText(ch, sx, sy);
+        }
+
+        // Draw a central 2D Pixel-Art Mini Heart Emblem when morphed into Heart (m > 0.65)
+        if (m > 0.65) {
+          const emblemAlpha = ((m - 0.65) / 0.35) * alpha;
+          drawPixelHeartSprite(
+            centerX,
+            centerY - scaleRadius * 0.04,
+            Math.max(3, Math.round(scaleRadius * 0.012 * heartPulse)),
+            eyeType === 'golden_brown' ? '#FBE0B4' : '#9BB5FF',
+            emblemAlpha * 0.9
+          );
+        }
+
+        ctx.restore();
+      }
+
+      /* ==========================================================================
+         4. PHOTO-TO-COLORED-ASCII PREPROCESSOR & FOCAL DETECTOR
+         ========================================================================== */
+      function analyzePhotoFocalPoints(img, slotHint) {
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        const aspect = w / h;
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 32;
+        tempCanvas.height = 32;
+        const tCtx = tempCanvas.getContext('2d');
+        tCtx.drawImage(img, 0, 0, 32, 32);
+        const data = tCtx.getImageData(0, 0, 32, 32).data;
+
+        const getRGB = (nx, ny) => {
+          const px = clamp(Math.floor(nx * 32), 0, 31);
+          const py = clamp(Math.floor(ny * 32), 0, 31);
+          const idx = (py * 32 + px) * 4;
+          return [data[idx], data[idx + 1], data[idx + 2]];
+        };
+
+        const isPortrait = aspect < 0.92;
+        const topRight = getRGB(0.85, 0.06);
+        const bottomRight = getRGB(0.82, 0.85);
+        const bottomCenter = getRGB(0.50, 0.82);
+        const topLeft = getRGB(0.15, 0.15);
+
+        let focalX = 0.52;
+        let focalY = 0.42;
+        let stripY = 0.42;
+
+        if (isPortrait) {
+          if (topRight[1] > topRight[0] + 15 || slotHint === 'harshu') {
+            focalX = 0.358;
+            focalY = 0.532;
+            stripY = 0.445;
+          } else {
+            focalX = 0.54;
+            focalY = 0.45;
+            stripY = 0.45;
+          }
+        } else {
+          const isTealBottomRight = (bottomRight[2] > bottomRight[0] + 35 && bottomRight[1] > bottomRight[0] + 20);
+          const isWarmRedBottom = (bottomCenter[0] > bottomCenter[2] + 35 && bottomCenter[0] > 70);
+
+          if (isWarmRedBottom && !isTealBottomRight) {
+            if (slotHint === 'aryan') {
+              focalX = 0.658; focalY = 0.338; stripY = 0.348;
+            } else if (slotHint === 'harshu') {
+              focalX = 0.246; focalY = 0.462; stripY = 0.45;
+            } else {
+              focalX = 0.50; focalY = 0.40; stripY = 0.40;
+            }
+          } else if (isTealBottomRight) {
+            const foreheadWarmth = topLeft[0] - topLeft[2];
+            if (foreheadWarmth > 28 && topLeft[0] > 110) {
+              if (slotHint === 'aryan') {
+                focalX = 0.625; focalY = 0.228; stripY = 0.285;
+              } else if (slotHint === 'harshu') {
+                focalX = 0.452; focalY = 0.298; stripY = 0.335;
+              } else {
+                focalX = 0.46; focalY = 0.32; stripY = 0.32;
+              }
+            } else {
+              focalX = 0.56; focalY = 0.255; stripY = 0.255;
+            }
+          } else if (slotHint === 'aryan') {
+            focalX = 0.64; focalY = 0.34; stripY = 0.35;
+          }
+        }
+
+        return { focalX, focalY, stripY, aspect };
+      }
+
+      // 1.2x luminance boost + warm golden-hour & indigo shadow balance
+      function computeWarmAsciiRGB(r, g, b, pupilLift = 0) {
+        let nr = r * 1.24 + 10 + pupilLift * 54;
+        let ng = g * 1.18 + 8  + pupilLift * 44;
+        let nb = b * 1.12 + 16 + pupilLift * 52; // Subtle indigo shadow lift for dark regions
+
+        const minR = 26 + pupilLift * 48;
+        const minG = 28 + pupilLift * 42;
+        const minB = 46 + pupilLift * 65;
+
+        nr = clamp(Math.round(nr), minR, 255);
+        ng = clamp(Math.round(ng), minG, 255);
+        nb = clamp(Math.round(nb), minB, 255);
+
+        return { r: nr, g: ng, b: nb, css: `rgb(${nr},${ng},${nb})` };
+      }
+
+      function buildAsciiAsset(img, slotHint) {
+        const { focalX, focalY, stripY, aspect } = analyzePhotoFocalPoints(img, slotHint);
+        const gridCols = aspect >= 1 ? 300 : 240;
+        const gridRows = Math.round(gridCols / aspect);
+
+        const sampleCanvas = document.createElement('canvas');
+        sampleCanvas.width = gridCols;
+        sampleCanvas.height = gridRows;
+        const sCtx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+        sCtx.drawImage(img, 0, 0, gridCols, gridRows);
+        const imgData = sCtx.getImageData(0, 0, gridCols, gridRows).data;
+
+        const cells = new Array(gridCols * gridRows);
+        for (let row = 0; row < gridRows; row++) {
+          for (let col = 0; col < gridCols; col++) {
+            const idx = row * gridCols + col;
+            const pIdx = idx * 4;
+            const r = imgData[pIdx];
+            const g = imgData[pIdx + 1];
+            const b = imgData[pIdx + 2];
+
+            const baseColor = computeWarmAsciiRGB(r, g, b, 0);
+            const zoomColor = computeWarmAsciiRGB(r, g, b, 0.85);
+            const baseChar = ROMANTIC_PALETTE[(row * 7 + col) % ROMANTIC_PALETTE.length];
+            const eyeString = (row % 3 === 2) ? "HARSHU " : "LOVE ";
+            const eyeChar = eyeString[col % eyeString.length];
+
+            cells[idx] = {
+              r: baseColor.r,
+              g: baseColor.g,
+              b: baseColor.b,
+              cssBase: baseColor.css,
+              cssZoom: zoomColor.css,
+              baseChar,
+              eyeChar
+            };
+          }
+        }
+
+        const baseCellPx = 4.5;
+        const bakedCanvas = document.createElement('canvas');
+        bakedCanvas.width = Math.round(gridCols * baseCellPx);
+        bakedCanvas.height = Math.round(gridRows * baseCellPx);
+        const bCtx = bakedCanvas.getContext('2d');
+
+        bCtx.fillStyle = '#060918';
+        bCtx.fillRect(0, 0, bakedCanvas.width, bakedCanvas.height);
+        bCtx.font = `700 ${baseCellPx * 1.04}px "JetBrains Mono", monospace`;
+        bCtx.textAlign = 'center';
+        bCtx.textBaseline = 'middle';
+
+        for (let row = 0; row < gridRows; row++) {
+          const cy = (row + 0.5) * baseCellPx;
+          for (let col = 0; col < gridCols; col++) {
+            const cell = cells[row * gridCols + col];
+            bCtx.fillStyle = cell.cssBase;
+            bCtx.fillText(cell.baseChar, (col + 0.5) * baseCellPx, cy);
+          }
+        }
+
+        return {
+          img,
+          aspect,
+          gridCols,
+          gridRows,
+          cells,
+          bakedCanvas,
+          focalX,
+          focalY,
+          stripY
+        };
+      }
+
+      function createProceduralFallbackPortrait(slotId) {
+        const c = document.createElement('canvas');
+        c.width = slotId === 'harshu' ? 720 : 960;
+        c.height = slotId === 'harshu' ? 960 : 720;
+        const ctx = c.getContext('2d');
+
+        const grad = ctx.createRadialGradient(c.width * 0.5, c.height * 0.45, 20, c.width * 0.5, c.height * 0.5, c.width * 0.65);
+        grad.addColorStop(0, '#D89B6C');
+        grad.addColorStop(0.55, '#6A4842');
+        grad.addColorStop(1, '#0B1230');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, c.width, c.height);
+
+        return buildAsciiAsset(c, slotId);
+      }
+
+      async function initializeWorkspaceAssets() {
+        const statusEl = document.getElementById('asset-status-text');
+        const manualWrap = document.getElementById('manual-folder-Wrap');
+
+        // 1. Resolve Audio in background
+        const audioPromise = setupAudio();
+
+        // 2. Resolve all 5 photo memories in parallel
+        const [aryanRes, harshuRes, us1Res, us2Res, us3Res] = await Promise.all([
+          loadFirstAvailable(CANDIDATES.aryan),
+          loadFirstAvailable(CANDIDATES.harshu),
+          loadFirstAvailable(CANDIDATES.us1),
+          loadFirstAvailable(CANDIDATES.us2),
+          loadFirstAvailable(CANDIDATES.us3)
+        ]);
+
+        await audioPromise;
+
+        if (aryanRes) {
+          PHOTO_SLOTS[0].asset = buildAsciiAsset(aryanRes.img, 'aryan');
+          PHOTO_SLOTS[0].loaded = true;
+        }
+        if (harshuRes) {
+          PHOTO_SLOTS[1].asset = buildAsciiAsset(harshuRes.img, 'harshu');
+          PHOTO_SLOTS[1].loaded = true;
+        }
+        if (us1Res) {
+          PHOTO_SLOTS[2].asset = buildAsciiAsset(us1Res.img, 'us1');
+          PHOTO_SLOTS[2].loaded = true;
+        }
+        if (us2Res) {
+          PHOTO_SLOTS[3].asset = buildAsciiAsset(us2Res.img, 'us2');
+          PHOTO_SLOTS[3].loaded = true;
+        }
+        if (us3Res) {
+          PHOTO_SLOTS[4].asset = buildAsciiAsset(us3Res.img, 'us3');
+          PHOTO_SLOTS[4].loaded = true;
+        }
+
+        // Fill any empty slot with procedural warm portrait
+        const anyLoaded = PHOTO_SLOTS.find(s => s.loaded);
+        for (let i = 0; i < PHOTO_SLOTS.length; i++) {
+          if (!PHOTO_SLOTS[i].loaded) {
+            PHOTO_SLOTS[i].asset = anyLoaded
+              ? buildAsciiAsset(anyLoaded.asset.img, PHOTO_SLOTS[i].id)
+              : createProceduralFallbackPortrait(PHOTO_SLOTS[i].id);
+          }
+        }
+
+        const loadedCount = PHOTO_SLOTS.filter(s => s.loaded).length;
+        if (loadedCount >= 5 && audioLoaded) {
+          statusEl.textContent = "✦ All 5 memories & song ready";
+        } else if (loadedCount > 0 || audioLoaded) {
+          statusEl.textContent = `✦ Loaded ${Math.min(5, loadedCount)}/5 photos ${audioLoaded ? '& song' : ''}`;
+          if (loadedCount < 5 || !audioLoaded) manualWrap.style.display = 'inline-flex';
+        } else {
+          statusEl.textContent = "✦ Ready (or select workspace files below)";
+          manualWrap.style.display = 'inline-flex';
+        }
+      }
+        } else {
+          statusEl.textContent = "✦ Ready (or select workspace files below)";
+          manualWrap.style.display = 'inline-flex';
+        }
+      }
+
+      document.getElementById('manual-file-input').addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+        const imgFiles = [];
+        for (const file of files) {
+          if (file.type.startsWith('audio/') || /\.(mp3|m4a|wav|ogg)$/i.test(file.name)) {
+            bgAudio.src = URL.createObjectURL(file);
+            audioLoaded = true;
+          } else if (file.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(file.name)) {
+            imgFiles.push(file);
+          }
+        }
+        const loadedEntries = [];
+        for (const f of imgFiles) {
+          const res = await tryLoadImage(URL.createObjectURL(f));
+          if (res) loadedEntries.push({ name: f.name.toLowerCase(), img: res.img });
+        }
+        if (loadedEntries.length > 0) {
+          const used = new Set();
+          const aryanIdx = loadedEntries.findIndex(x => x.name.includes('aryan'));
+          if (aryanIdx !== -1) {
+            used.add(aryanIdx);
+            PHOTO_SLOTS[0].asset = buildAsciiAsset(loadedEntries[aryanIdx].img, 'aryan');
+            PHOTO_SLOTS[0].loaded = true;
+          }
+          const harshuIdx = loadedEntries.findIndex((x, idx) => !used.has(idx) && (x.name.includes('harshu') || x.name.includes('harsita')));
+          if (harshuIdx !== -1) {
+            used.add(harshuIdx);
+            PHOTO_SLOTS[1].asset = buildAsciiAsset(loadedEntries[harshuIdx].img, 'harshu');
+            PHOTO_SLOTS[1].loaded = true;
+          }
+          const rest = loadedEntries.filter((_, idx) => !used.has(idx));
+          for (let i = 0; i < 5; i++) {
+            if (!used.has(i) && rest.length > 0 && (i >= 2 || !PHOTO_SLOTS[i].loaded)) {
+              const item = rest.shift();
+              PHOTO_SLOTS[i].asset = buildAsciiAsset(item.img, PHOTO_SLOTS[i].id);
+              PHOTO_SLOTS[i].loaded = true;
+            }
+          }
+        }
+        document.getElementById('asset-status-text').textContent = "✦ Workspace memories & music linked!";
+        document.getElementById('manual-folder-Wrap').style.display = 'none';
+      });
+
+      function startWarmAcousticFallback() {
+        if (synthAudioCtx) return;
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          synthAudioCtx = new AudioCtx();
+          const master = synthAudioCtx.createGain();
+          master.gain.setValueAtTime(0.001, synthAudioCtx.currentTime);
+          master.gain.linearRampToValueAtTime(0.16, synthAudioCtx.currentTime + 3.0);
+          master.connect(synthAudioCtx.destination);
+
+          const notes = [261.63, 329.63, 392.00, 493.88, 523.25, 392.00, 329.63, 293.66];
+          let step = 0;
+          setInterval(() => {
+            if (!synthAudioCtx || synthAudioCtx.state !== 'running') return;
+            const now = synthAudioCtx.currentTime;
+            const osc = synthAudioCtx.createOscillator();
+            const g = synthAudioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(notes[step % notes.length], now);
+            g.gain.setValueAtTime(0.001, now);
+            g.gain.linearRampToValueAtTime(0.11, now + 0.4);
+            g.gain.exponentialRampToValueAtTime(0.0008, now + 2.6);
+            osc.connect(g);
+            g.connect(master);
+            osc.start(now);
+            osc.stop(now + 2.7);
+            step++;
+          }, 950);
+        } catch (e) {}
+      }
+
+      /* ==========================================================================
+         5. 2D PIXEL GAME STYLE ANIMATION ENGINE (STARS, PIXEL HEARTS & CHIBI DUO)
+         ========================================================================== */
+      const canvas = document.getElementById('sanctuary-canvas');
+      const ctx = canvas.getContext('2d', { alpha: false });
+
+      let vw = window.innerWidth;
+      let vh = window.innerHeight;
+      let dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      function resizeCanvas() {
+        vw = window.innerWidth;
+        vh = window.innerHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round(vw * dpr);
+        canvas.height = Math.round(vh * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
+      // 8-Bit 2D Pixel Heart Bitmap (11x10)
+      const PIXEL_HEART_MAP = [
+        "01110001110",
+        "11221011111",
+        "12211111111",
+        "12111111111",
+        "11111111111",
+        "01111111110",
+        "00111111100",
+        "00011111000",
+        "00001110000",
+        "00000100000"
+      ];
+
+      function drawPixelHeartSprite(cx, cy, pixelSize, mainColor, alpha = 1.0) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        const startX = Math.round(cx - (11 * pixelSize) * 0.5);
+        const startY = Math.round(cy - (10 * pixelSize) * 0.5);
+
+        for (let r = 0; r < PIXEL_HEART_MAP.length; r++) {
+          const rowStr = PIXEL_HEART_MAP[r];
+          for (let c = 0; c < rowStr.length; c++) {
+            const ch = rowStr[c];
+            if (ch === '0') continue;
+            ctx.fillStyle = (ch === '2') ? '#FFFFFF' : mainColor;
+            ctx.fillRect(startX + c * pixelSize, startY + r * pixelSize, pixelSize, pixelSize);
+          }
+        }
+        ctx.restore();
+      }
+
+      // Floating 2D Pixel Hearts (spawned on click, during heart morphs, and "Feel Warmth")
+      const pixelHearts = [];
+      function spawnPixelHeart(x, y, color = null) {
+        const palette = ['#FBE0B4', '#8CA6FF', '#FF94B8', '#E5B176', '#6888FF'];
+        pixelHearts.push({
+          x: x + (Math.random() - 0.5) * 40,
+          y: y + (Math.random() - 0.5) * 20,
+          vy: -(0.75 + Math.random() * 1.15),
+          vxPhase: Math.random() * Math.PI * 2,
+          size: Math.random() > 0.45 ? 3 : 2,
+          alpha: 0.95,
+          color: color || palette[Math.floor(Math.random() * palette.length)]
+        });
+        if (pixelHearts.length > 65) pixelHearts.shift();
+      }
+
+      // 2D Pixel Twinkling Night Stars + Shooting Stars
+      const PIXEL_STAR_COUNT = 54;
+      const pixelStars = [];
+      for (let i = 0; i < PIXEL_STAR_COUNT; i++) {
+        pixelStars.push({
+          nx: Math.random(),
+          ny: Math.random() * 0.85,
+          size: Math.random() > 0.72 ? 3 : 2,
+          phase: Math.random() * Math.PI * 2,
+          speed: 1.2 + Math.random() * 2.2,
+          isGold: Math.random() > 0.62
+        });
+      }
+
+      let shootingStar = { active: false, x: 0, y: 0, vx: 0, vy: 0, life: 0 };
+
+      function drawPixelStarrySky(timeSec) {
+        ctx.save();
+        for (let i = 0; i < pixelStars.length; i++) {
+          const s = pixelStars[i];
+          const sx = Math.round(s.nx * vw);
+          const sy = Math.round(s.ny * vh);
+          const twinkle = 0.25 + 0.75 * Math.pow(0.5 + 0.5 * Math.sin(timeSec * s.speed + s.phase), 2);
+          ctx.globalAlpha = twinkle * 0.75;
+          ctx.fillStyle = s.isGold ? '#FBE0B4' : '#9BB5FF';
+
+          const p = s.size;
+          // Crisp 2D Pixel cross star sprite
+          ctx.fillRect(sx, sy, p, p);
+          if (twinkle > 0.65 && p >= 3) {
+            ctx.globalAlpha = twinkle * 0.4;
+            ctx.fillRect(sx - p, sy, p, p);
+            ctx.fillRect(sx + p, sy, p, p);
+            ctx.fillRect(sx, sy - p, p, p);
+            ctx.fillRect(sx, sy + p, p, p);
+          }
+        }
+
+        // Occasional 2D Pixel Shooting Star across the Indigo Sky
+        if (!shootingStar.active && Math.random() < 0.004) {
+          shootingStar.active = true;
+          shootingStar.x = vw * (0.15 + Math.random() * 0.65);
+          shootingStar.y = vh * (0.05 + Math.random() * 0.25);
+          shootingStar.vx = 6.5 + Math.random() * 3.5;
+          shootingStar.vy = 2.8 + Math.random() * 1.8;
+          shootingStar.life = 1.0;
+        }
+
+        if (shootingStar.active) {
+          shootingStar.x += shootingStar.vx;
+          shootingStar.y += shootingStar.vy;
+          shootingStar.life -= 0.022;
+          if (shootingStar.life <= 0) {
+            shootingStar.active = false;
+          } else {
+            for (let t = 0; t < 8; t++) {
+              ctx.globalAlpha = shootingStar.life * (1 - t / 8) * 0.85;
+              ctx.fillStyle = t < 2 ? '#FFF6E5' : '#8CA6FF';
+              ctx.fillRect(
+                Math.round(shootingStar.x - t * shootingStar.vx * 0.65),
+                Math.round(shootingStar.y - t * shootingStar.vy * 0.65),
+                3, 3
+              );
+            }
+          }
+        }
+        ctx.restore();
+      }
+
+      // Cozy 2D Pixel-Art Companion Sprite (Aaru & Harshu sitting together in bottom-left corner)
+      // Harshu in her Indigo-Blue Kurti + Aaru beside her, gently bobbing to the music!
+      function drawCozyPixelCouple(timeSec) {
+        const p = 3; // 3px per pixel-art block
+        const baseX = 26;
+        const baseY = vh - 34;
+        const bob1 = Math.round(Math.sin(timeSec * 2.2) * 1) * p;
+        const bob2 = Math.round(Math.sin(timeSec * 2.2 + 0.8) * 1) * p;
+
+        ctx.save();
+        ctx.globalAlpha = 0.88;
+
+        // Subtle pixel-art grassy indigo hill / bench base
+        ctx.fillStyle = '#182459';
+        ctx.fillRect(baseX - 2 * p, baseY, 26 * p, 2 * p);
+        ctx.fillStyle = '#2B3E8F';
+        ctx.fillRect(baseX, baseY - p, 22 * p, p);
+
+        // --- HARSHU PIXEL SPRITE (Left, wearing Dark Blue Indigo Kurti & tiny Bindi) ---
+        const hx = baseX + 2 * p;
+        const hy = baseY - 12 * p + bob1;
+        // Flowing dark hair
+        ctx.fillStyle = '#18131A';
+        ctx.fillRect(hx, hy, 7 * p, 7 * p);
+        // Warm skin face
+        ctx.fillStyle = '#E8B48A';
+        ctx.fillRect(hx + p, hy + 2 * p, 5 * p, 4 * p);
+        // Golden-brown pixel eyes
+        ctx.fillStyle = '#7A421D';
+        ctx.fillRect(hx + 2 * p, hy + 4 * p, p, p);
+        ctx.fillRect(hx + 4 * p, hy + 4 * p, p, p);
+        // Indigo-Blue Kurti (her favorite color!)
+        ctx.fillStyle = '#2E4BC8';
+        ctx.fillRect(hx + p, hy + 6 * p, 5 * p, 5 * p);
+        ctx.fillStyle = '#6E8BFF'; // Embroidery pixel detail
+        ctx.fillRect(hx + 2 * p, hy + 7 * p, p, p);
+        ctx.fillRect(hx + 4 * p, hy + 8 * p, p, p);
+
+        // --- AARU PIXEL SPRITE (Right, leaning warmly beside her) ---
+        const ax = baseX + 10 * p;
+        const ay = baseY - 13 * p + bob2;
+        // Curly dark hair
+        ctx.fillStyle = '#141218';
+        ctx.fillRect(ax, ay, 7 * p, 4 * p);
+        // Warm skin face
+        ctx.fillStyle = '#DFAA80';
+        ctx.fillRect(ax + p, ay + 3 * p, 5 * p, 4 * p);
+        // Black pixel eyes
+        ctx.fillStyle = '#0B0B12';
+        ctx.fillRect(ax + 2 * p, ay + 4 * p, p, p);
+        ctx.fillRect(ax + 4 * p, ay + 4 * p, p, p);
+        // Sky-blue / slate shirt
+        ctx.fillStyle = '#5278B8';
+        ctx.fillRect(ax + p, ay + 7 * p, 6 * p, 5 * p);
+
+        // Floating animated 2D Pixel Heart between them
+        const heartFloatY = baseY - 17 * p + Math.sin(timeSec * 3.2) * 3;
+        drawPixelHeartSprite(baseX + 9.5 * p, heartFloatY, 2, '#FBE0B4', 0.9);
+
+        ctx.restore();
+      }
+
+      // Indigo Starlight Fireflies & Golden-Amber Embers
+      const EMBER_COUNT = 68;
+      const embers = [];
+
+      function createEmber(randomY = true) {
+        return {
+          x: Math.random() * vw,
+          y: randomY ? Math.random() * vh : vh + 20 + Math.random() * 40,
+          radius: 1.2 + Math.random() * 2.5,
+          vy: -(0.20 + Math.random() * 0.45),
+          vxPhase: Math.random() * Math.PI * 2,
+          vxSpeed: 0.4 + Math.random() * 0.8,
+          vxAmp: 0.16 + Math.random() * 0.36,
+          baseAlpha: 0.25 + Math.random() * 0.55,
+          pulsePhase: Math.random() * Math.PI * 2,
+          isIndigo: Math.random() > 0.46 // Blend of Indigo Starlight & Golden-Amber Embers
+        };
+      }
+
+      for (let i = 0; i < EMBER_COUNT; i++) embers.push(createEmber(true));
+
+      function updateAndDrawParticles(timeSec, intensityMultiplier = 1.0) {
+        ctx.save();
+        // 1. Indigo & Golden Embers
+        for (let i = 0; i < embers.length; i++) {
+          const e = embers[i];
+          e.y += e.vy * intensityMultiplier;
+          e.x += Math.sin(timeSec * e.vxSpeed + e.vxPhase) * e.vxAmp;
+
+          if (e.y < -30) {
+            embers[i] = createEmber(false);
+            continue;
+          }
+          if (e.x < -20) e.x = vw + 20;
+          if (e.x > vw + 20) e.x = -20;
+
+          const flicker = 0.72 + 0.28 * Math.sin(timeSec * 2.4 + e.pulsePhase);
+          const alpha = Math.min(1, e.baseAlpha * flicker * intensityMultiplier);
+
+          const grad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.radius * 4.2);
+          if (e.isIndigo) {
+            grad.addColorStop(0, `rgba(218, 228, 255, ${alpha})`);
+            grad.addColorStop(0.38, `rgba(108, 142, 255, ${alpha * 0.58})`);
+            grad.addColorStop(1, 'rgba(75, 105, 230, 0)');
+          } else {
+            grad.addColorStop(0, `rgba(255, 240, 212, ${alpha})`);
+            grad.addColorStop(0.38, `rgba(235, 178, 108, ${alpha * 0.55})`);
+            grad.addColorStop(1, 'rgba(212, 163, 115, 0)');
+          }
+
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(e.x, e.y, e.radius * 4.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // 2. Floating 2D Pixel Hearts
+        for (let i = pixelHearts.length - 1; i >= 0; i--) {
+          const ph = pixelHearts[i];
+          ph.y += ph.vy;
+          ph.x += Math.sin(timeSec * 2.5 + ph.vxPhase) * 0.45;
+          ph.alpha -= 0.0065;
+          if (ph.alpha <= 0 || ph.y < -20) {
+            pixelHearts.splice(i, 1);
+            continue;
+          }
+          drawPixelHeartSprite(ph.x, ph.y, ph.size, ph.color, ph.alpha);
+        }
+        ctx.restore();
+      }
+
+      /* ==========================================================================
+         6. CORE DYNAMIC LOD COLORED ASCII PORTRAIT RENDERER
+         ========================================================================== */
+      let heartbeatWave = { active: false, startTime: 0 };
+
+      function renderAsciiPortrait(asset, options) {
+        if (!asset) return;
+        const {
+          alpha = 1.0,
+          zoom = 1.0,
+          focusX = 0.5,
+          focusY = 0.5,
+          targetScreenX = vw * 0.5,
+          targetScreenY = vh * 0.5,
+          clipRect = null,
+          timeSec = 0
+        } = options;
+
+        if (alpha <= 0.005) return;
+
+        const marginScale = 0.88;
+        let baseW = vw * marginScale;
+        let baseH = baseW / asset.aspect;
+        if (baseH > vh * marginScale) {
+          baseH = vh * marginScale;
+          baseW = baseH * asset.aspect;
+        }
+
+        const worldW = baseW * zoom;
+        const worldH = baseH * zoom;
+        const drawX = targetScreenX - focusX * worldW;
+        const drawY = targetScreenY - focusY * worldH;
+
+        ctx.save();
+        if (clipRect) {
+          ctx.beginPath();
+          ctx.rect(clipRect.x, clipRect.y, clipRect.w, clipRect.h);
+          ctx.clip();
+        }
+
+        const liveDetailBlend = clamp((zoom - 1.25) / 1.15, 0, 1);
+        const bakedAlpha = alpha * (1 - liveDetailBlend * 0.86);
+
+        if (bakedAlpha > 0.01) {
+          ctx.globalAlpha = bakedAlpha;
+          ctx.drawImage(asset.bakedCanvas, drawX, drawY, worldW, worldH);
+        }
+
+        const heartbeatActive = heartbeatWave.active && (timeSec - heartbeatWave.startTime < 4.5);
+        if (zoom > 1.18 || heartbeatActive) {
+          const cols = asset.gridCols;
+          const rows = asset.gridRows;
+          const cellW = worldW / cols;
+          const cellH = worldH / rows;
+
+          const step = (zoom < 1.65 && heartbeatActive) ? 2 : 1;
+          const effectiveCellW = cellW * step;
+
+          const minCol = Math.max(0, Math.floor((-drawX) / cellW));
+          const maxCol = Math.min(cols - 1, Math.ceil((vw - drawX) / cellW));
+          const minRow = Math.max(0, Math.floor((-drawY) / cellH));
+          const maxRow = Math.min(rows - 1, Math.ceil((vh - drawY) / cellH));
+
+          const fontSize = clamp(effectiveCellW * 0.94, 4.5, 48);
+          ctx.font = `700 ${fontSize.toFixed(1)}px "JetBrains Mono", monospace`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const textAlpha = heartbeatActive && zoom <= 1.25
+            ? alpha * 0.92
+            : alpha * Math.min(1, (zoom - 1.15) / 0.75);
+
+          ctx.globalAlpha = textAlpha;
+          const useEyeWords = zoom > 2.15;
+
+          const hbElapsed = heartbeatActive ? (timeSec - heartbeatWave.startTime) : 0;
+          const hbRadius1 = hbElapsed * Math.max(vw, vh) * 0.42;
+          const hbRadius2 = Math.max(0, hbElapsed - 0.35) * Math.max(vw, vh) * 0.42;
+
+          for (let r = minRow; r <= maxRow; r += step) {
+            const sy = drawY + (r + 0.5 * step) * cellH;
+            const rowOffset = r * cols;
+
+            for (let c = minCol; c <= maxCol; c += step) {
+              const sx = drawX + (c + 0.5 * step) * cellW;
+              const cell = asset.cells[rowOffset + c];
+              const charToDraw = useEyeWords ? cell.eyeChar : cell.baseChar;
+              if (charToDraw === ' ') continue;
+
+              if (heartbeatActive) {
+                const dist = Math.hypot(sx - vw * 0.5, sy - vh * 0.5);
+                const wave1 = Math.max(0, 1 - Math.abs(dist - hbRadius1) / 95);
+                const wave2 = Math.max(0, 1 - Math.abs(dist - hbRadius2) / 85);
+                const wave = Math.max(wave1, wave2 * 0.85) * Math.max(0, 1 - hbElapsed / 4.2);
+
+                if (wave > 0.08) {
+                  const gr = Math.min(255, Math.round(cell.r + wave * 95));
+                  const gg = Math.min(255, Math.round(cell.g + wave * 82));
+                  const gb = Math.min(255, Math.round(cell.b + wave * 110));
+                  ctx.fillStyle = `rgb(${gr},${gg},${gb})`;
+                } else {
+                  ctx.fillStyle = useEyeWords ? cell.cssZoom : cell.cssBase;
+                }
+              } else {
+                ctx.fillStyle = useEyeWords ? cell.cssZoom : cell.cssBase;
+              }
+
+              ctx.fillText(charToDraw, sx, sy);
+            }
+          }
+        }
+
+        if (zoom < 1.8 && !clipRect) {
+          ctx.globalAlpha = alpha * 0.32 * Math.max(0, 1 - (zoom - 1) * 1.2);
+          ctx.strokeStyle = 'rgba(140, 166, 255, 0.42)';
+          ctx.lineWidth = 1.2;
+          ctx.strokeRect(drawX, drawY, worldW, worldH);
+        }
+
+        ctx.restore();
+      }
+
+      /* ==========================================================================
+         7. THE 7-SCENE SOOTHING TIMELINE & EYE-TO-HEART CHOREOGRAPHY
+         ========================================================================== */
+      let experienceStarted = false;
+      let startTimestamp = 0;
+      let timelineSec = 0;
+      let interactiveMode = false;
+      let activePhotoIndex = 0;
+
+      // Interactive Mode Eye->Heart Morph State
+      let interactiveMorphState = {
+        active: false,
+        progress: 0, // 0 = Photo, 1 = ASCII Eye, 2 = ASCII Heart
+        targetStep: 0
+      };
+
+      const userCam = {
+        zoom: 1.0,
+        targetZoom: 1.0,
+        focusX: 0.5,
+        focusY: 0.5,
+        targetFocusX: 0.5,
+        targetFocusY: 0.5,
+        isDragging: false,
+        dragStartX: 0,
+        dragStartY: 0,
+        dragStartFocusX: 0.5,
+        dragStartFocusY: 0.5
+      };
+
+      const subtitleContainer = document.getElementById('subtitle-container');
+      const subtitlePill = document.getElementById('subtitle-pill');
+      const subtitleText = document.getElementById('subtitle-text');
+      const interactiveDock = document.getElementById('interactive-dock');
+      const topHud = document.getElementById('top-hud');
+      const sceneBadge = document.getElementById('scene-badge');
+      const zoomReadout = document.getElementById('zoom-readout');
+      const eyeZoomBtn = document.getElementById('eye-zoom-btn');
+      const timelineThread = document.getElementById('timeline-thread');
+
+      let currentSubtitleStr = '';
+
+      function updateSubtitles(t) {
+        if (interactiveMode) {
+          subtitlePill.classList.remove('visible');
+          return;
+        }
+        let activeSub = null;
+        for (const sub of SUBTITLES) {
+          if (t >= sub.start && t <= sub.end) {
+            activeSub = sub;
+            break;
+          }
+        }
+        if (activeSub) {
+          if (currentSubtitleStr !== activeSub.text) {
+            currentSubtitleStr = activeSub.text;
+            subtitleText.textContent = activeSub.text;
+          }
+          subtitlePill.classList.add('visible');
+        } else {
+          subtitlePill.classList.remove('visible');
+        }
+      }
+
+      function enterInteractiveSanctuary(defaultIndex = 1) {
+        if (interactiveMode) return;
+        interactiveMode = true;
+        activePhotoIndex = defaultIndex;
+        canvas.classList.add('interactive-mode');
+        interactiveDock.classList.add('visible');
+        subtitleContainer.classList.add('dock-active');
+        eyeZoomBtn.style.display = 'inline-block';
+        sceneBadge.textContent = 'SANCTUARY // FREE EXPLORE & EYE-HEART MORPH';
+        updateDockButtons();
+      }
+
+      function updateDockButtons() {
+        const btns = interactiveDock.querySelectorAll('.dock-btn[data-photo]');
+        btns.forEach(btn => {
+          const idx = parseInt(btn.getAttribute('data-photo'), 10);
+          btn.classList.toggle('active', idx === activePhotoIndex && interactiveMorphState.targetStep === 0);
+        });
+      }
+
+      // Main 60FPS Render Loop
+      function renderFrame(nowMs) {
+        requestAnimationFrame(renderFrame);
+
+        const nowSec = nowMs * 0.001;
+
+        // 1. Deep Midnight Indigo Sky Gradient Canvas (#050816 -> #0C153A)
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, vh);
+        bgGrad.addColorStop(0, '#050816');
+        bgGrad.addColorStop(0.55, '#09102B');
+        bgGrad.addColorStop(1, '#0E173D');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, vw, vh);
+
+        // 2. Render 2D Pixel Starry Sky in Background
+        drawPixelStarrySky(nowSec);
+
+        if (!experienceStarted) {
+          updateAndDrawParticles(nowSec, 0.85);
+          return;
+        }
+
+        timelineSec = (nowMs - startTimestamp) * 0.001;
+
+        if (audioLoaded && timelineSec <= 3.2 && !bgAudio.muted) {
+          bgAudio.volume = Math.min(0.88, Math.max(0, (timelineSec / 3.0) * 0.88));
+        }
+
+        const progressPct = Math.min(100, (timelineSec / 80.0) * 100);
+        timelineThread.style.width = `${progressPct}%`;
+
+        updateSubtitles(timelineSec);
+
+        const aryanAsset  = PHOTO_SLOTS[0].asset;
+        const harshuAsset = PHOTO_SLOTS[1].asset;
+        const us1Asset    = PHOTO_SLOTS[2].asset;
+        const us2Asset    = PHOTO_SLOTS[3].asset;
+        const us3Asset    = PHOTO_SLOTS[4].asset;
+
+        let currentDisplayZoom = 1.0;
+
+        /* ----------------------------------------------------------------------
+           SCENE 0 (0s to 10s) — THE COOL-DOWN BREATH (Indigo Starlight Opening)
+           ---------------------------------------------------------------------- */
+        if (timelineSec < 10.0 && !interactiveMode) {
+          sceneBadge.textContent = 'SCENE 00 // QUIET BREATH';
+          const breath = 0.5 + 0.5 * Math.sin(timelineSec * 0.9);
+          const r = 70 + breath * 48;
+          const g = ctx.createRadialGradient(vw * 0.5, vh * 0.45, 4, vw * 0.5, vh * 0.45, r * 2.5);
+          g.addColorStop(0, `rgba(140, 166, 255, ${0.18 + breath * 0.1})`);
+          g.addColorStop(0.45, `rgba(243, 198, 143, ${0.08 + breath * 0.05})`);
+          g.addColorStop(1, 'rgba(5, 8, 22, 0)');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.arc(vw * 0.5, vh * 0.45, r * 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        /* ----------------------------------------------------------------------
+           SCENE 1 (10s to 24s) — ARYAN EYES -> BLACK ASCII EYE -> HEART MORPH
+           ---------------------------------------------------------------------- */
+        else if (timelineSec >= 10.0 && timelineSec < 24.0 && !interactiveMode) {
+          sceneBadge.textContent = 'SCENE 01 // ARYAN BLACK ASCII EYE ➔ HEART';
+          // 10s to 16.2s: Fade in Aryan portrait & zoom into his pupil (1.0x -> 6.5x)
+          // 14.8s to 18.5s: Crossfade into Bespoke Anatomical Black/Obsidian ASCII Eye
+          // 18.5s to 24.0s: Morph Black ASCII Eye into Starlight-Indigo & Obsidian ASCII Heart!
+          const fadeIn = easeInOutSine((timelineSec - 10.0) / 2.2);
+          const zoomProgress = easeInOutSine((timelineSec - 11.5) / 5.2);
+          const zoom = lerp(1.0, 6.5, zoomProgress);
+          const fx = lerp(0.5, aryanAsset.focalX, zoomProgress);
+          const fy = lerp(0.5, aryanAsset.focalY, zoomProgress);
+
+          const eyeArtBlend = easeInOutSine((timelineSec - 14.8) / 2.2);
+          const heartMorphProgress = easeInOutSine((timelineSec - 18.2) / 3.8);
+
+          currentDisplayZoom = zoom;
+
+          if (eyeArtBlend < 1.0) {
+            renderAsciiPortrait(aryanAsset, {
+              alpha: fadeIn * (1.0 - eyeArtBlend),
+              zoom,
+              focusX: fx,
+              focusY: fy,
+              timeSec: nowSec
+            });
+          }
+
+          if (eyeArtBlend > 0.01) {
+            renderAsciiEyeToHeartMorph(
+              ARYAN_BLACK_EYE_SYSTEM,
+              heartMorphProgress,
+              eyeArtBlend,
+              nowSec,
+              'obsidian_black'
+            );
+            if (heartMorphProgress > 0.3 && Math.random() < 0.14) {
+              spawnPixelHeart(vw * 0.5 + (Math.random() - 0.5) * 180, vh * 0.46, '#9BB5FF');
+            }
+          }
+        }
+
+        /* ----------------------------------------------------------------------
+           SCENE 2 (24s to 40s) — HARSHU EYES -> GOLDEN-BROWN ASCII EYE -> HEART
+           ---------------------------------------------------------------------- */
+        else if (timelineSec >= 24.0 && timelineSec < 40.0 && !interactiveMode) {
+          sceneBadge.textContent = 'SCENE 02 // HARSHU GOLDEN-BROWN EYE ➔ HEART';
+          // 24s to 26.5s: Crossfade from Aryan's Heart into Harshu's Portrait at zoom 1.0x
+          // 26.5s to 29.8s: Admire Harshu Portrait
+          // 29.8s to 34.0s: Zoom deep into her golden-brown eyes (zoom 7.0x) & reveal Golden-Brown ASCII Eye
+          // 34.2s to 40.0s: Convert Golden-Brown ASCII Eye into Golden-Amber ASCII Heart!
+          const crossfade = easeInOutSine((timelineSec - 24.0) / 2.4);
+
+          if (crossfade < 1.0) {
+            renderAsciiEyeToHeartMorph(
+              ARYAN_BLACK_EYE_SYSTEM,
+              1.0,
+              1.0 - crossfade,
+              nowSec,
+              'obsidian_black'
+            );
+          }
+
+          const zoomProgress = easeInOutSine((timelineSec - 29.2) / 4.8);
+          const zoom = lerp(1.0, 7.0, zoomProgress);
+          const fx = lerp(0.5, harshuAsset.focalX, zoomProgress);
+          const fy = lerp(0.5, harshuAsset.focalY, zoomProgress);
+
+          const goldenEyeBlend = easeInOutSine((timelineSec - 32.2) / 2.2);
+          const goldenHeartMorph = easeInOutSine((timelineSec - 35.0) / 3.6);
+
+          currentDisplayZoom = zoom;
+
+          if (goldenEyeBlend < 1.0) {
+            renderAsciiPortrait(harshuAsset, {
+              alpha: crossfade * (1.0 - goldenEyeBlend),
+              zoom,
+              focusX: fx,
+              focusY: fy,
+              timeSec: nowSec
+            });
+          }
+
+          if (goldenEyeBlend > 0.01) {
+            renderAsciiEyeToHeartMorph(
+              HARSHU_GOLDEN_EYE_SYSTEM,
+              goldenHeartMorph,
+              goldenEyeBlend,
+              nowSec,
+              'golden_brown'
+            );
+            if (goldenHeartMorph > 0.3 && Math.random() < 0.16) {
+              spawnPixelHeart(vw * 0.5 + (Math.random() - 0.5) * 180, vh * 0.46, '#FBE0B4');
+            }
+          }
+        }
+
+        /* ----------------------------------------------------------------------
+           SCENE 3 (40s to 56s) — THE EYE MERGE INTO "US" (Warm Sanctuary Climax)
+           ---------------------------------------------------------------------- */
+        else if (timelineSec >= 40.0 && timelineSec < 56.0 && !interactiveMode) {
+          sceneBadge.textContent = 'SCENE 03 // WHEN OUR EYES MEET';
+          const glideProgress = easeInOutSine((timelineSec - 40.0) / 4.5);
+          const mergeProgress = easeInOutSine((timelineSec - 47.5) / 2.2);
+          const revealProgress = easeInOutSine((timelineSec - 47.5) / 8.5);
+
+          const stripsAlpha = 1.0 - mergeProgress;
+
+          if (stripsAlpha > 0.01) {
+            const stripH = vh * 0.34;
+            const centerY = vh * 0.46;
+            const verticalClosing = mergeProgress * (stripH * 0.42);
+
+            const topRect = { x: 0, y: centerY - stripH - 4 + verticalClosing, w: vw, h: stripH };
+            const botRect = { x: 0, y: centerY + 4 - verticalClosing, w: vw, h: stripH };
+
+            const slideOffsetTop = lerp(-vw * 0.42, 0, glideProgress);
+            const slideOffsetBot = lerp(vw * 0.42, 0, glideProgress);
+
+            renderAsciiPortrait(aryanAsset, {
+              alpha: stripsAlpha,
+              zoom: 2.35,
+              focusX: aryanAsset.focalX,
+              focusY: aryanAsset.stripY,
+              targetScreenX: vw * 0.5 + slideOffsetTop,
+              targetScreenY: topRect.y + topRect.h * 0.5,
+              clipRect: topRect,
+              timeSec: nowSec
+            });
+
+            renderAsciiPortrait(harshuAsset, {
+              alpha: stripsAlpha,
+              zoom: 2.35,
+              focusX: harshuAsset.focalX,
+              focusY: harshuAsset.stripY,
+              targetScreenX: vw * 0.5 + slideOffsetBot,
+              targetScreenY: botRect.y + botRect.h * 0.5,
+              clipRect: botRect,
+              timeSec: nowSec
+            });
+
+            const restGlow = easeInOutSine((timelineSec - 42.5) / 2.0) * stripsAlpha;
+            if (restGlow > 0.01) {
+              ctx.save();
+              const seamGrad = ctx.createLinearGradient(0, centerY - 50, 0, centerY + 50);
+              seamGrad.addColorStop(0, 'rgba(95, 130, 255, 0)');
+              seamGrad.addColorStop(0.5, `rgba(251, 224, 180, ${0.46 * restGlow})`);
+              seamGrad.addColorStop(1, 'rgba(95, 130, 255, 0)');
+              ctx.fillStyle = seamGrad;
+              ctx.fillRect(0, centerY - 50, vw, 100);
+              drawPixelHeartSprite(vw * 0.5, centerY, 3, '#FBE0B4', restGlow);
+              ctx.restore();
+            }
+          }
+
+          if (timelineSec >= 47.2) {
+            const usAlpha = easeInOutSine((timelineSec - 47.2) / 2.0);
+            const usZoom = lerp(3.5, 1.0, revealProgress);
+            const usFx = lerp(us1Asset.focalX, 0.5, revealProgress);
+            const usFy = lerp(us1Asset.focalY, 0.5, revealProgress);
+
+            currentDisplayZoom = usZoom;
+            renderAsciiPortrait(us1Asset, {
+              alpha: usAlpha,
+              zoom: usZoom,
+              focusX: usFx,
+              focusY: usFy,
+              timeSec: nowSec
+            });
+
+            const bloomDist = Math.abs(timelineSec - 48.3);
+            if (bloomDist < 2.2) {
+              const bloomStrength = Math.pow(Math.cos((bloomDist / 2.2) * (Math.PI / 2)), 2);
+              ctx.save();
+              const bloomGrad = ctx.createRadialGradient(
+                vw * 0.5, vh * 0.46, 10,
+                vw * 0.5, vh * 0.46, Math.max(vw, vh) * 0.65
+              );
+              bloomGrad.addColorStop(0, `rgba(255, 240, 212, ${bloomStrength * 0.72})`);
+              bloomGrad.addColorStop(0.45, `rgba(118, 152, 255, ${bloomStrength * 0.36})`);
+              bloomGrad.addColorStop(1, 'rgba(5, 8, 22, 0)');
+              ctx.fillStyle = bloomGrad;
+              ctx.fillRect(0, 0, vw, vh);
+              ctx.restore();
+            }
+          }
+        }
+
+        /* ----------------------------------------------------------------------
+           SCENE 4 & SCENE 5 (56s to 80s) — FULL 5-PHOTO WARMTH MONTAGE
+           ---------------------------------------------------------------------- */
+        else if (timelineSec >= 56.0 && timelineSec < 80.0 && !interactiveMode) {
+          sceneBadge.textContent = 'SCENE 04-05 // MEMORIES IN INDIGO & GOLD';
+          if (timelineSec < 64.0) {
+            const segT = (timelineSec - 56.0) / 8.0;
+            const fade = easeInOutSine((timelineSec - 61.2) / 2.8);
+            const z1 = lerp(1.0, 1.24, easeInOutSine(segT));
+
+            renderAsciiPortrait(us1Asset, {
+              alpha: 1.0 - fade,
+              zoom: z1,
+              focusX: lerp(0.5, 0.48, segT),
+              focusY: lerp(0.5, 0.44, segT),
+              timeSec: nowSec
+            });
+            if (fade > 0) {
+              renderAsciiPortrait(us2Asset, {
+                alpha: fade,
+                zoom: lerp(1.16, 1.08, fade),
+                focusX: 0.5,
+                focusY: 0.46,
+                timeSec: nowSec
+              });
+            }
+            currentDisplayZoom = z1;
+          } else if (timelineSec < 72.0) {
+            const segT = (timelineSec - 64.0) / 8.0;
+            const fade = easeInOutSine((timelineSec - 69.2) / 2.8);
+            const z2 = lerp(1.08, 1.28, easeInOutSine(segT));
+
+            renderAsciiPortrait(us2Asset, {
+              alpha: 1.0 - fade,
+              zoom: z2,
+              focusX: lerp(0.5, 0.53, segT),
+              focusY: lerp(0.46, 0.42, segT),
+              timeSec: nowSec
+            });
+            if (fade > 0) {
+              renderAsciiPortrait(us3Asset, {
+                alpha: fade,
+                zoom: lerp(1.22, 1.12, fade),
+                focusX: 0.5,
+                focusY: 0.45,
+                timeSec: nowSec
+              });
+            }
+            currentDisplayZoom = z2;
+          } else {
+            const segT = (timelineSec - 72.0) / 8.0;
+            const z3 = lerp(1.12, 1.0, easeInOutSine(segT));
+            renderAsciiPortrait(us3Asset, {
+              alpha: 1.0,
+              zoom: z3,
+              focusX: lerp(0.5, 0.5, segT),
+              focusY: lerp(0.45, 0.5, segT),
+              timeSec: nowSec
+            });
+            currentDisplayZoom = z3;
+          }
+        }
+
+        /* ----------------------------------------------------------------------
+           SCENE 6 (80s onwards) — INTERACTIVE SANCTUARY & EYE->HEART MORPH MODE
+           ---------------------------------------------------------------------- */
+        else {
+          if (!interactiveMode) {
+            enterInteractiveSanctuary(1);
+          }
+
+          userCam.zoom = lerp(userCam.zoom, userCam.targetZoom, 0.14);
+          userCam.focusX = lerp(userCam.focusX, userCam.targetFocusX, 0.16);
+          userCam.focusY = lerp(userCam.focusY, userCam.targetFocusY, 0.16);
+          interactiveMorphState.progress = lerp(interactiveMorphState.progress, interactiveMorphState.targetStep, 0.065);
+
+          const selectedAsset = PHOTO_SLOTS[activePhotoIndex].asset;
+          currentDisplayZoom = userCam.zoom;
+
+          // If user zoomed deep into Aryan (0) or Harshu (1) eyes OR toggled Eye->Heart Morph button:
+          const autoEyeTrigger = (activePhotoIndex <= 1) ? clamp((userCam.zoom - 3.6) / 3.2, 0, 2.0) : 0;
+          const effectiveStage = Math.max(interactiveMorphState.progress, autoEyeTrigger);
+
+          const portraitAlpha = clamp(1.0 - effectiveStage, 0, 1);
+          if (portraitAlpha > 0.01) {
+            renderAsciiPortrait(selectedAsset, {
+              alpha: portraitAlpha,
+              zoom: userCam.zoom,
+              focusX: userCam.focusX,
+              focusY: userCam.focusY,
+              timeSec: nowSec
+            });
+          }
+
+          if (effectiveStage > 0.01) {
+            const eyeAlpha = clamp(effectiveStage, 0, 1);
+            const heartMorphT = clamp(effectiveStage - 1.0, 0, 1);
+            const isHarshuStyle = (activePhotoIndex === 1);
+
+            renderAsciiEyeToHeartMorph(
+              isHarshuStyle ? HARSHU_GOLDEN_EYE_SYSTEM : ARYAN_BLACK_EYE_SYSTEM,
+              heartMorphT,
+              eyeAlpha,
+              nowSec,
+              isHarshuStyle ? 'golden_brown' : 'obsidian_black'
+            );
+          }
+
+          if (heartbeatWave.active) {
+            const hbElapsed = nowSec - heartbeatWave.startTime;
+            if (hbElapsed < 4.5) {
+              const r1 = hbElapsed * Math.max(vw, vh) * 0.42;
+              const a1 = Math.max(0, 1 - hbElapsed / 4.2) * 0.42;
+              ctx.save();
+              ctx.strokeStyle = `rgba(155, 181, 255, ${a1})`;
+              ctx.lineWidth = 2.5;
+              ctx.beginPath();
+              ctx.arc(vw * 0.5, vh * 0.5, r1, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.restore();
+            } else {
+              heartbeatWave.active = false;
+            }
+          }
+        }
+
+        zoomReadout.textContent = `Zoom: ${currentDisplayZoom.toFixed(1)}x`;
+
+        // 3. Render Cozy 2D Pixel-Art Companion Couple in Bottom-Left
+        drawCozyPixelCouple(nowSec);
+
+        // 4. Render Floating Indigo Fireflies, Golden Embers & 2D Pixel Hearts
+        const emberBoost = heartbeatWave.active ? 1.65 : 1.0;
+        updateAndDrawParticles(nowSec, emberBoost);
+      }
+
+      /* ==========================================================================
+         8. INTERACTIVE SANCTUARY CONTROLS & EYE->HEART MORPH TRIGGERS
+         ========================================================================== */
+      function cycleEyeToHeartMorph() {
+        if (!interactiveMode) {
+          enterInteractiveSanctuary(activePhotoIndex <= 1 ? activePhotoIndex : 1);
+        }
+        // Ensure either Aryan (0) or Harshu (1) is selected for the Eye->Heart showcase
+        if (activePhotoIndex > 1) {
+          activePhotoIndex = 1;
+        }
+        // Cycle: 0 (Photo) -> 1 (ASCII Eye) -> 2 (ASCII Heart) -> 0
+        interactiveMorphState.targetStep = (interactiveMorphState.targetStep + 1) % 3;
+
+        const labelMap = [
+          'Eye ➔ Heart 🫀',
+          'Convert Eye ➔ Heart ♥',
+          'Back to Portrait ✦'
+        ];
+        document.getElementById('morph-dock-btn').textContent = labelMap[interactiveMorphState.targetStep];
+        eyeZoomBtn.textContent = labelMap[interactiveMorphState.targetStep];
+
+        for (let i = 0; i < 8; i++) {
+          spawnPixelHeart(vw * 0.5, vh * 0.46);
+        }
+        updateDockButtons();
+      }
+
+      document.getElementById('morph-dock-btn').addEventListener('click', cycleEyeToHeartMorph);
+      eyeZoomBtn.addEventListener('click', cycleEyeToHeartMorph);
+
+      interactiveDock.querySelectorAll('.dock-btn[data-photo]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.getAttribute('data-photo'), 10);
+          activePhotoIndex = idx;
+          interactiveMorphState.targetStep = 0;
+          document.getElementById('morph-dock-btn').textContent = 'Eye ➔ Heart 🫀';
+          eyeZoomBtn.textContent = 'Eye ➔ Heart Morph 🫀';
+          userCam.targetZoom = 1.0;
+          userCam.targetFocusX = 0.5;
+          userCam.targetFocusY = 0.5;
+          updateDockButtons();
+        });
+      });
+
+      zoomReadout.addEventListener('click', () => {
+        if (!interactiveMode) return;
+        interactiveMorphState.targetStep = 0;
+        userCam.targetZoom = 1.0;
+        userCam.targetFocusX = 0.5;
+        userCam.targetFocusY = 0.5;
+        updateDockButtons();
+      });
+
+      // Replay Button
+      document.getElementById('replay-btn').addEventListener('click', () => {
+        interactiveMode = false;
+        interactiveMorphState.targetStep = 0;
+        interactiveMorphState.progress = 0;
+        canvas.classList.remove('interactive-mode');
+        interactiveDock.classList.remove('visible');
+        subtitleContainer.classList.remove('dock-active');
+        eyeZoomBtn.style.display = 'none';
+        userCam.zoom = 1.0;
+        userCam.targetZoom = 1.0;
+        userCam.focusX = 0.5;
+        userCam.focusY = 0.5;
+        userCam.targetFocusX = 0.5;
+        userCam.targetFocusY = 0.5;
+        startTimestamp = performance.now();
+        if (audioLoaded) {
+          bgAudio.currentTime = 0;
+          bgAudio.play().catch(() => {});
+        }
+      });
+
+      // "Feel Warmth 🤍" Button
+      let warmthToastTimer = null;
+      document.getElementById('feel-warmth-btn').addEventListener('click', () => {
+        heartbeatWave.active = true;
+        heartbeatWave.startTime = performance.now() * 0.001;
+
+        for (let i = 0; i < 18; i++) {
+          embers.push(createEmber(false));
+          if (embers.length > 95) embers.shift();
+          spawnPixelHeart(vw * (0.25 + Math.random() * 0.5), vh * (0.35 + Math.random() * 0.35));
+        }
+
+        const toast = document.getElementById('warmth-toast');
+        toast.classList.add('visible');
+        if (warmthToastTimer) clearTimeout(warmthToastTimer);
+        warmthToastTimer = setTimeout(() => {
+          toast.classList.remove('visible');
+        }, 7500);
+      });
+
+      // Mousewheel / Trackpad Zoom (1.0x to 12.0x)
+      // On Aryan (0) & Harshu (1), scrolling deeper smoothly reveals the ASCII Eye and converts it into the ASCII Heart!
+      canvas.addEventListener('wheel', (e) => {
+        if (!interactiveMode) return;
+        e.preventDefault();
+
+        const zoomFactor = Math.exp(-e.deltaY * 0.0018);
+        const nextZoom = clamp(userCam.targetZoom * zoomFactor, 1.0, 12.0);
+
+        const asset = PHOTO_SLOTS[activePhotoIndex].asset;
+        if (asset) {
+          const marginScale = 0.88;
+          let baseW = vw * marginScale;
+          let baseH = baseW / asset.aspect;
+          if (baseH > vh * marginScale) {
+            baseH = vh * marginScale;
+            baseW = baseH * asset.aspect;
+          }
+
+          const mouseOffsetX = (e.clientX - vw * 0.5) / (baseW * userCam.targetZoom);
+          const mouseOffsetY = (e.clientY - vh * 0.5) / (baseH * userCam.targetZoom);
+          const cursorImgX = userCam.targetFocusX + mouseOffsetX;
+          const cursorImgY = userCam.targetFocusY + mouseOffsetY;
+          const newFactor = 1 - (userCam.targetZoom / nextZoom);
+
+          userCam.targetFocusX = clamp(userCam.targetFocusX + (cursorImgX - userCam.targetFocusX) * newFactor, 0.05, 0.95);
+          userCam.targetFocusY = clamp(userCam.targetFocusY + (cursorImgY - userCam.targetFocusY) * newFactor, 0.05, 0.95);
+        }
+
+        userCam.targetZoom = nextZoom;
+        if (nextZoom <= 1.05) {
+          userCam.targetFocusX = 0.5;
+          userCam.targetFocusY = 0.5;
+        }
+      }, { passive: false });
+
+      // Drag to Pan + Click on 2D Pixel Couple to Burst Pixel Hearts
+      canvas.addEventListener('pointerdown', (e) => {
+        // Check if clicked near the 2D Pixel Couple in bottom-left
+        if (e.clientX < 130 && e.clientY > vh - 100) {
+          for (let i = 0; i < 10; i++) {
+            spawnPixelHeart(55, vh - 55);
+          }
+          return;
+        }
+        if (!interactiveMode) return;
+        userCam.isDragging = true;
+        userCam.dragStartX = e.clientX;
+        userCam.dragStartY = e.clientY;
+        userCam.dragStartFocusX = userCam.targetFocusX;
+        userCam.dragStartFocusY = userCam.targetFocusY;
+        canvas.setPointerCapture(e.pointerId);
+      });
+
+      canvas.addEventListener('pointermove', (e) => {
+        if (!interactiveMode || !userCam.isDragging) return;
+        const dx = e.clientX - userCam.dragStartX;
+        const dy = e.clientY - userCam.dragStartY;
+        const sensitivity = 1.0 / (Math.min(vw, vh) * 0.85 * userCam.zoom);
+
+        userCam.targetFocusX = clamp(userCam.dragStartFocusX - dx * sensitivity, 0.05, 0.95);
+        userCam.targetFocusY = clamp(userCam.dragStartFocusY - dy * sensitivity, 0.05, 0.95);
+      });
+
+      canvas.addEventListener('pointerup', (e) => {
+        userCam.isDragging = false;
+        try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+      });
+
+      const muteBtn = document.getElementById('mute-btn');
+      muteBtn.addEventListener('click', () => {
+        bgAudio.muted = !bgAudio.muted;
+        muteBtn.textContent = bgAudio.muted ? '♫ Sound Muted' : '♫ Sound On';
+      });
+
+      /* ==========================================================================
+         9. OPENING SANCTUARY UNLOCK & INITIALIZATION
+         ========================================================================== */
+      document.getElementById('enter-btn').addEventListener('click', () => {
+        document.getElementById('sanctuary-overlay').classList.add('hidden');
+        topHud.classList.add('visible');
+        sceneBadge.classList.add('visible');
+
+        experienceStarted = true;
+        startTimestamp = performance.now();
+
+        if (audioLoaded) {
+          bgAudio.volume = 0;
+          bgAudio.play().catch(() => {
+            startWarmAcousticFallback();
+          });
+        } else {
+          startWarmAcousticFallback();
+        }
+      });
+
+      initializeWorkspaceAssets();
+      requestAnimationFrame(renderFrame);
+    })();
+  </script>
+</body>
+</html>
